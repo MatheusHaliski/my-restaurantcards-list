@@ -1,13 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { initializeApp, getApps } from "firebase/app";
+import { collection, getDocs, getFirestore } from "firebase/firestore";
 import {
-  isFirebaseAuthReady,
   signInWithGoogle,
   signOutUser,
   subscribeToAuthChanges,
 } from "./auth";
-import { getRestaurants } from "./firebase";
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
+  projectId:
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "funcionarioslistaapp2025",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
+};
+
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 export default function RestaurantCardsPage() {
   const [restaurants, setRestaurants] = useState([]);
@@ -60,16 +73,7 @@ export default function RestaurantCardsPage() {
     try {
       await signInWithGoogle();
     } catch (signInError) {
-      const code = signInError?.code;
-      if (code === "auth/missing-config") {
-        setAuthError("Firebase auth is not configured.");
-      } else if (code === "auth/popup-blocked") {
-        setAuthError("Popup blocked. Allow popups and try again.");
-      } else if (code === "auth/popup-closed-by-user") {
-        setAuthError("Popup closed before completing sign-in.");
-      } else {
-        setAuthError("Unable to sign in with Google.");
-      }
+      setAuthError("Unable to sign in with Google.");
     }
   };
 
@@ -165,36 +169,15 @@ export default function RestaurantCardsPage() {
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: "14px" }}>Logged in user</div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              justifyContent: "flex-end",
-              fontWeight: 600,
-            }}
-          >
-            {user?.photoURL && (
-              <img
-                src={user.photoURL}
-                alt={user.displayName || user.email || "User avatar"}
-                style={{ width: "28px", height: "28px", borderRadius: "50%" }}
-              />
-            )}
-            <span>{user?.displayName || user?.email || "Guest"}</span>
+          <div style={{ fontWeight: 600 }}>
+            {user?.displayName || user?.email || "Guest"}
           </div>
           {authError && (
             <div style={{ fontSize: "12px", color: "#fca5a5" }}>{authError}</div>
           )}
-          {!isFirebaseAuthReady && (
-            <div style={{ fontSize: "12px", color: "#fca5a5" }}>
-              Configure Firebase env vars to enable Google sign-in.
-            </div>
-          )}
           <button
             type="button"
             onClick={user ? handleSignOut : handleSignIn}
-            disabled={!isFirebaseAuthReady && !user}
             style={{
               marginTop: "8px",
               padding: "6px 12px",
@@ -204,7 +187,6 @@ export default function RestaurantCardsPage() {
               color: "#fff",
               fontSize: "12px",
               cursor: "pointer",
-              opacity: !isFirebaseAuthReady && !user ? 0.6 : 1,
             }}
           >
             {user ? "Sign out" : "Sign in with Google"}
