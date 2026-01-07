@@ -171,7 +171,7 @@ useEffect(() => {
   {/* Logo + título */}
   <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
     <img
-      src="/friendlyeats.jpg"
+      src="/friendly-eats.svg"
       alt="FriendlyEats logo"
       style={{
         width: "44px",
