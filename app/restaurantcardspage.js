@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { initializeApp, getApps } from "firebase/app";
 import { collection, getDocs, getFirestore } from "firebase/firestore";
+import {
+  signInWithGoogle,
+  signOutUser,
+  subscribeToAuthChanges,
+} from "./auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
@@ -25,6 +30,8 @@ export default function RestaurantCardsPage() {
   const [country, setCountry] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
+  const [user, setUser] = useState(null);
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -56,6 +63,32 @@ export default function RestaurantCardsPage() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthChanges((nextUser) => {
+      setUser(nextUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleSignIn = async () => {
+    setAuthError("");
+    try {
+      await signInWithGoogle();
+    } catch (signInError) {
+      setAuthError("Unable to sign in with Google.");
+    }
+  };
+
+  const handleSignOut = async () => {
+    setAuthError("");
+    try {
+      await signOutUser();
+    } catch (signOutError) {
+      setAuthError("Unable to sign out right now.");
+    }
+  };
 
   const availableCountries = useMemo(() => {
     const options = new Set();
@@ -140,7 +173,28 @@ export default function RestaurantCardsPage() {
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: "14px" }}>Logged in user</div>
-          <div style={{ fontWeight: 600 }}>Guest</div>
+          <div style={{ fontWeight: 600 }}>
+            {user?.displayName || user?.email || "Guest"}
+          </div>
+          {authError && (
+            <div style={{ fontSize: "12px", color: "#fca5a5" }}>{authError}</div>
+          )}
+          <button
+            type="button"
+            onClick={user ? handleSignOut : handleSignIn}
+            style={{
+              marginTop: "8px",
+              padding: "6px 12px",
+              borderRadius: "999px",
+              border: "1px solid #fff",
+              background: "transparent",
+              color: "#fff",
+              fontSize: "12px",
+              cursor: "pointer",
+            }}
+          >
+            {user ? "Sign out" : "Sign in with Google"}
+          </button>
         </div>
       </header>
 
