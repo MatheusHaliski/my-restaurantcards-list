@@ -19,32 +19,71 @@ export default function RestaurantCardsPage() {
   const [user, setUser] = useState(null);
   const [authError, setAuthError] = useState("");
 
-  useEffect(() => {
-    let isMounted = true;
+useEffect(() => {
+  let isMounted = true;
 
-    const loadRestaurants = async () => {
-      try {
-        const items = await getRestaurants();
-        if (isMounted) {
-          setRestaurants(items);
-        }
-      } catch (fetchError) {
-        if (isMounted) {
-          setError("Unable to load restaurant data. Check Firebase configuration.");
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+  async function loadRestaurants() {
+    try {
+      setLoading(true);
+      setError("");
+
+      const items = await getRestaurants();
+
+      if (isMounted) {
+        setRestaurants(items);
       }
-    };
+    } catch (err) {
+      // 1) Log completo no console (para dev)
+      console.error("[RestaurantCardsPage] getRestaurants() failed:", err);
 
-    loadRestaurants();
+      // 2) Tenta extrair um "código" e uma "mensagem" do Firebase
+      const code = err?.code || "";
+      const message = err?.message || "Unknown error";
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+      // 3) Constrói uma mensagem explicativa pro usuário
+      let friendly = "Failed to load restaurants.";
+
+      // PERMISSÃO (Firestore rules)
+      if (
+        code === "permission-denied" ||
+        message.toLowerCase().includes("missing or insufficient permissions")
+      ) {
+        friendly =
+          "Permission denied (Firestore Rules). You must allow read access to 'restaurants' or sign in.";
+      }
+
+      // CONFIG (env/config)
+      if (
+        message.toLowerCase().includes("not configured") ||
+        message.toLowerCase().includes("missing firebase env vars") ||
+        message.toLowerCase().includes("firebase app was not initialized")
+      ) {
+        friendly =
+          "Firebase config is missing. Check .env.local (NEXT_PUBLIC_FIREBASE_*) and restart `npm run dev`.";
+      }
+
+      // OUTROS ERROS comuns (domínio auth, etc.)
+      if (code === "auth/unauthorized-domain") {
+        friendly =
+          "Unauthorized domain for Google Sign-In. Add your domain in Firebase Auth > Settings > Authorized domains.";
+      }
+
+      // 4) Mostra na tela o "friendly" + detalhes técnicos
+      if (isMounted) {
+        setError(`${friendly}\n\n[debug] ${code || "no-code"}: ${message}`);
+      }
+    } finally {
+      if (isMounted) setLoading(false);
+    }
+  }
+
+  loadRestaurants();
+
+  return () => {
+    isMounted = false;
+  };
+}, []);
+
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((nextUser) => {
