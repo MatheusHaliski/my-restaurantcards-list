@@ -3,13 +3,13 @@
 import { initializeApp, getApps } from "firebase/app";
 
 export const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
-  projectId:
-    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "funcionarioslistaapp2025",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
+  apiKey: "AIzaSyA_pHu5ASG9PAhmcEwxcckXGovRWYW0Mic",
+  authDomain: "funcionarioslistaapp2025.firebaseapp.com",
+  projectId: "funcionarioslistaapp2025",
+  storageBucket: "funcionarioslistaapp2025.firebasestorage.app",
+  messagingSenderId: "457209482063",
+  appId: "1:457209482063:web:3fc5d0f3aedd2e7ebe133a",
+  measurementId: "G-34JDWQ1ZXW"
 };
 
 export const hasFirebaseConfig =
