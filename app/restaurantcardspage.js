@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getRestaurants } from "./firebase";
+import { FOOD_CATEGORIES } from "./categories";
 import {
   signInWithGoogle,
   signOutUser,
@@ -16,6 +17,7 @@ export default function RestaurantCardsPage() {
   const [country, setCountry] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
+  const [category, setCategory] = useState("");
   const [user, setUser] = useState(null);
   const [authError, setAuthError] = useState("");
 
@@ -150,10 +152,26 @@ useEffect(() => {
       const matchesCountry = country ? restaurant.country === country : true;
       const matchesState = state ? restaurant.state === state : true;
       const matchesCity = city ? restaurant.city === city : true;
+      const selectedCategory = category.trim().toLowerCase();
+      const matchesCategory = selectedCategory
+        ? Array.isArray(restaurant.categories)
+          ? restaurant.categories.some(
+              (value) =>
+                String(value || "").toLowerCase() === selectedCategory
+            )
+          : String(restaurant.category || "").toLowerCase() ===
+            selectedCategory
+        : true;
 
-      return matchesName && matchesCountry && matchesState && matchesCity;
+      return (
+        matchesName &&
+        matchesCountry &&
+        matchesState &&
+        matchesCity &&
+        matchesCategory
+      );
     });
-  }, [restaurants, nameQuery, country, state, city]);
+  }, [restaurants, nameQuery, country, state, city, category]);
 
   return (
     <div style={{ padding: "32px", fontFamily: "Arial, sans-serif" }}>
@@ -311,6 +329,22 @@ useEffect(() => {
           >
             <option value="">All cities</option>
             {availableCities.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <select
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+            style={{
+              padding: "10px 12px",
+              borderRadius: "8px",
+              border: "1px solid #d1d5db",
+            }}
+          >
+            <option value="">All categories</option>
+            {FOOD_CATEGORIES.map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>
