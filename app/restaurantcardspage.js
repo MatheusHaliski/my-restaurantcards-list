@@ -38,11 +38,7 @@ export default function RestaurantCardsPage() {
 
     const loadRestaurants = async () => {
       try {
-        const snapshot = await getDocs(collection(db, "restaurants"));
-        const items = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const items = await getRestaurants();
         if (isMounted) {
           setRestaurants(items);
         }
