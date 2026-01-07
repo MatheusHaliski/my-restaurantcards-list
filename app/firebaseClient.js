@@ -1,6 +1,16 @@
 "use client";
 
 import { initializeApp, getApps } from "firebase/app";
+import { getApp } from "firebase/app";
+
+console.log("FIREBASE PROJECT ID (env):", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+
+try {
+  const app = getApp();
+  console.log("FIREBASE APP OPTIONS:", app.options);
+} catch (e) {
+  console.log("getApp() failed:", e);
+}
 
 export const firebaseConfig = {
   apiKey: "AIzaSyA_pHu5ASG9PAhmcEwxcckXGovRWYW0Mic",
