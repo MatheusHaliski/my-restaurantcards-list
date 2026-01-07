@@ -28,15 +28,12 @@ const app = getApps().length
     ? initializeApp(firebaseConfig)
     : null;
 export const auth = app ? getAuth(app) : null;
-export const isFirebaseAuthReady = Boolean(auth);
 
 const provider = new GoogleAuthProvider();
 
 export const signInWithGoogle = () => {
   if (!auth) {
-    const error = new Error("Firebase auth is not configured.");
-    error.code = "auth/missing-config";
-    return Promise.reject(error);
+    return Promise.reject(new Error("Firebase auth is not configured."));
   }
   return signInWithPopup(auth, provider);
 };
