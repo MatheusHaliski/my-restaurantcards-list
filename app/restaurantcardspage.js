@@ -1,21 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { initializeApp, getApps } from "firebase/app";
-import { collection, getDocs, getFirestore } from "firebase/firestore";
-
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
-  projectId:
-    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "funcionarioslistaapp2025",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
-};
-
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import {
+  isFirebaseAuthReady,
+  signInWithGoogle,
+  signOutUser,
+  subscribeToAuthChanges,
+} from "./auth";
+import { getRestaurants } from "./firebase";
 
 export default function RestaurantCardsPage() {
   const [restaurants, setRestaurants] = useState([]);
@@ -25,17 +17,15 @@ export default function RestaurantCardsPage() {
   const [country, setCountry] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
+  const [user, setUser] = useState(null);
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
     const loadRestaurants = async () => {
       try {
-        const snapshot = await getDocs(collection(db, "restaurants"));
-        const items = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const items = await getRestaurants();
         if (isMounted) {
           setRestaurants(items);
         }
@@ -56,6 +46,41 @@ export default function RestaurantCardsPage() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthChanges((nextUser) => {
+      setUser(nextUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleSignIn = async () => {
+    setAuthError("");
+    try {
+      await signInWithGoogle();
+    } catch (signInError) {
+      const code = signInError?.code;
+      if (code === "auth/missing-config") {
+        setAuthError("Firebase auth is not configured.");
+      } else if (code === "auth/popup-blocked") {
+        setAuthError("Popup blocked. Allow popups and try again.");
+      } else if (code === "auth/popup-closed-by-user") {
+        setAuthError("Popup closed before completing sign-in.");
+      } else {
+        setAuthError("Unable to sign in with Google.");
+      }
+    }
+  };
+
+  const handleSignOut = async () => {
+    setAuthError("");
+    try {
+      await signOutUser();
+    } catch (signOutError) {
+      setAuthError("Unable to sign out right now.");
+    }
+  };
 
   const availableCountries = useMemo(() => {
     const options = new Set();
@@ -140,7 +165,50 @@ export default function RestaurantCardsPage() {
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: "14px" }}>Logged in user</div>
-          <div style={{ fontWeight: 600 }}>Guest</div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              justifyContent: "flex-end",
+              fontWeight: 600,
+            }}
+          >
+            {user?.photoURL && (
+              <img
+                src={user.photoURL}
+                alt={user.displayName || user.email || "User avatar"}
+                style={{ width: "28px", height: "28px", borderRadius: "50%" }}
+              />
+            )}
+            <span>{user?.displayName || user?.email || "Guest"}</span>
+          </div>
+          {authError && (
+            <div style={{ fontSize: "12px", color: "#fca5a5" }}>{authError}</div>
+          )}
+          {!isFirebaseAuthReady && (
+            <div style={{ fontSize: "12px", color: "#fca5a5" }}>
+              Configure Firebase env vars to enable Google sign-in.
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={user ? handleSignOut : handleSignIn}
+            disabled={!isFirebaseAuthReady && !user}
+            style={{
+              marginTop: "8px",
+              padding: "6px 12px",
+              borderRadius: "999px",
+              border: "1px solid #fff",
+              background: "transparent",
+              color: "#fff",
+              fontSize: "12px",
+              cursor: "pointer",
+              opacity: !isFirebaseAuthReady && !user ? 0.6 : 1,
+            }}
+          >
+            {user ? "Sign out" : "Sign in with Google"}
+          </button>
         </div>
       </header>
 
