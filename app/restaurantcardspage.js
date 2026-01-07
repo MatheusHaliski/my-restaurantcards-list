@@ -157,67 +157,73 @@ useEffect(() => {
 
   return (
     <div style={{ padding: "32px", fontFamily: "Arial, sans-serif" }}>
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 24px",
-          background: "#111827",
-          color: "#fff",
-          borderRadius: "16px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div
-            style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "50%",
-              background: "#f97316",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: "bold",
-            }}
-          >
-            RC
-          </div>
-          <div>
-            <div style={{ fontSize: "20px", fontWeight: 700 }}>
-              Restaurant Cards
-            </div>
-            <div style={{ fontSize: "12px", opacity: 0.8 }}>
-              Your favorite places at a glance
-            </div>
-          </div>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: "14px" }}>Logged in user</div>
-          <div style={{ fontWeight: 600 }}>
-            {user?.displayName || user?.email || "Guest"}
-          </div>
-          {authError && (
-            <div style={{ fontSize: "12px", color: "#fca5a5" }}>{authError}</div>
-          )}
-          <button
-            type="button"
-            onClick={user ? handleSignOut : handleSignIn}
-            style={{
-              marginTop: "8px",
-              padding: "6px 12px",
-              borderRadius: "999px",
-              border: "1px solid #fff",
-              background: "transparent",
-              color: "#fff",
-              fontSize: "12px",
-              cursor: "pointer",
-            }}
-          >
-            {user ? "Sign out" : "Sign in with Google"}
-          </button>
-        </div>
-      </header>
+<header
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "16px 24px",
+    background: "linear-gradient(135deg, #2563eb, #1e40af)", // azul
+    color: "#fff",
+    borderRadius: "16px",
+  }}
+>
+  {/* Logo + título */}
+  <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+    <img
+      src="/friendlyeats.jpg"
+      alt="FriendlyEats logo"
+      style={{
+        width: "44px",
+        height: "44px",
+        borderRadius: "10px",
+        objectFit: "cover",
+        background: "#fff",
+      }}
+    />
+
+    <div>
+      <div style={{ fontSize: "20px", fontWeight: 700 }}>
+        FriendlyEats
+      </div>
+      <div style={{ fontSize: "12px", opacity: 0.9 }}>
+        Discover great places to eat
+      </div>
+    </div>
+  </div>
+
+  {/* Auth info */}
+  <div style={{ textAlign: "right" }}>
+    <div style={{ fontSize: "14px" }}>Logged in user</div>
+    <div style={{ fontWeight: 600 }}>
+      {user?.displayName || user?.email || "Guest"}
+    </div>
+
+    {authError && (
+      <div style={{ fontSize: "12px", color: "#fde68a" }}>
+        {authError}
+      </div>
+    )}
+
+    <button
+      type="button"
+      onClick={user ? handleSignOut : handleSignIn}
+      style={{
+        marginTop: "8px",
+        padding: "6px 14px",
+        borderRadius: "999px",
+        border: "1px solid rgba(255,255,255,0.6)",
+        background: "transparent",
+        color: "#fff",
+        fontSize: "12px",
+        cursor: "pointer",
+      }}
+    >
+      {user ? "Sign out" : "Sign in with Google"}
+    </button>
+  </div>
+</header>
+
 
       <section
         style={{
