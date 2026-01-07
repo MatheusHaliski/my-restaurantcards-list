@@ -194,7 +194,23 @@ useEffect(() => {
 
   {/* Auth info */}
   <div style={{ textAlign: "right" }}>
-    <div style={{ fontSize: "14px" }}>Logged in user</div>
+    {user?.photoURL ? (
+      <img
+        src={user.photoURL}
+        alt={`${user.displayName || user.email || "User"} profile`}
+        style={{
+          width: "32px",
+          height: "32px",
+          borderRadius: "50%",
+          objectFit: "cover",
+          border: "1px solid rgba(255,255,255,0.6)",
+          marginLeft: "auto",
+          marginBottom: "6px",
+        }}
+      />
+    ) : (
+      <div style={{ fontSize: "14px" }}>Guest</div>
+    )}
     <div style={{ fontWeight: 600 }}>
       {user?.displayName || user?.email || "Guest"}
     </div>
