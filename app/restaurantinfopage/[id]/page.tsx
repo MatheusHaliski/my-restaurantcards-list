@@ -483,9 +483,6 @@ export default function RestaurantInfoPage() {
             >
               Categories
             </p>
-            <h3 style={{ margin: "6px 0 12px", color: "#0f172a" }}>
-              Popular offerings
-            </h3>
             {categoryList.length ? (
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                 {categoryList.map((category) => (
