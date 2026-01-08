@@ -24,6 +24,7 @@ import {
   subscribeToAuthChanges,
 } from "../../auth";
 import { firebaseApp, hasFirebaseConfig } from "../../firebaseClient";
+import { getCategoryIcon } from "../../categories";
 
 type RestaurantRecord = Record<string, unknown> & { id?: string };
 
@@ -514,9 +515,13 @@ export default function RestaurantInfoPage() {
                       borderRadius: "999px",
                       fontSize: "13px",
                       fontWeight: 600,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
                     }}
                   >
-                    {category}
+                    <span aria-hidden="true">{getCategoryIcon(category)}</span>
+                    <span>{category}</span>
                   </span>
                 ))}
               </div>

@@ -449,3 +449,44 @@ export const FOOD_CATEGORIES = [
   "Wine & Spirits",
   "Wraps",
 ];
+
+const CATEGORY_ICON_RULES = [
+  { keywords: ["pizza"], icon: "🍕" },
+  { keywords: ["burger", "cheesesteak"], icon: "🍔" },
+  { keywords: ["sushi", "japanese"], icon: "🍣" },
+  { keywords: ["taco", "tex-mex", "mexican"], icon: "🌮" },
+  { keywords: ["bbq", "barbeque", "barbecue", "smokehouse"], icon: "🍖" },
+  { keywords: ["chicken"], icon: "🍗" },
+  { keywords: ["steak"], icon: "🥩" },
+  { keywords: ["seafood", "fish", "oyster"], icon: "🐟" },
+  { keywords: ["ramen", "noodle", "noodles", "pho", "soup"], icon: "🍜" },
+  { keywords: ["salad", "vegan", "vegetarian"], icon: "🥗" },
+  { keywords: ["sandwich", "sub", "wrap"], icon: "🥪" },
+  { keywords: ["breakfast", "brunch", "pancake", "waffle"], icon: "🥞" },
+  { keywords: ["coffee", "cafe", "cafes", "tea"], icon: "☕" },
+  {
+    keywords: ["dessert", "ice cream", "gelato", "donut", "donuts", "shaved ice"],
+    icon: "🍨",
+  },
+  { keywords: ["bakery", "bakeries", "bread", "pastry", "cake", "cupcake"], icon: "🥐" },
+  { keywords: ["bar", "pub", "lounge", "nightlife", "tapas"], icon: "🍸" },
+  { keywords: ["beer", "brewery", "cider", "wine", "spirits"], icon: "🍺" },
+  { keywords: ["deli", "delicatessen", "cheese"], icon: "🧀" },
+  { keywords: ["market", "grocery"], icon: "🛒" },
+  { keywords: ["food truck", "food trucks", "street vendors"], icon: "🚚" },
+  { keywords: ["french"], icon: "🥖" },
+  { keywords: ["thai", "curry", "indian"], icon: "🍛" },
+  { keywords: ["italian", "pasta"], icon: "🍝" },
+  { keywords: ["korean", "teppanyaki"], icon: "🥢" },
+  { keywords: ["mediterranean", "greek"], icon: "🫒" },
+];
+
+export const getCategoryIcon = (category = "") => {
+  const normalized = String(category).toLowerCase();
+  for (const rule of CATEGORY_ICON_RULES) {
+    if (rule.keywords.some((keyword) => normalized.includes(keyword))) {
+      return rule.icon;
+    }
+  }
+  return "🍽️";
+};
