@@ -545,8 +545,16 @@ const MAIN_CATEGORY_RULES = [
     keywords: ["burger", "burgers", "hamburger", "cheeseburger","Ice Cream & Frozen Yogurt","Gelat","fast_food_restaurant","Donuts","Breakfast & Brunch"],
   },
    {
+    label: "Acai Bowls",
+    keywords: ["Ice Cream & Frozen Yogurt","Gelat","fast_food_restaurant","Donuts","Breakfast & Brunch"],
+  },
+   {
     label: "Donuts",
-    keywords: ["Donuts","Desserts","Chocolatiers & Shops","Breakfast & Brunch"],
+    keywords: ["Donuts","Desserts","Chocolatiers & Shops","Breakfast & Brunch","Bubble Tea", "tea", "Coffee & Tea"],
+  },
+  {
+    label: "Bakeries",
+    keywords: ["Donuts","Desserts","Chocolatiers & Shops","Breakfast & Brunch","Bubble Tea", "tea", "Coffee & Tea"],
   },
   {
     label: "Breakfast & Brunch",
@@ -564,12 +572,20 @@ const MAIN_CATEGORY_RULES = [
     label: "American (Traditional)",
     keywords: ["american (traditional)", "traditional american", "Breakfast & Brunch", "classic american","barbecue_restaurant","american_restaurant","fast_food_restaurant","Chicken Shop","Chicken Wings"],
   },
+   {
+    label: "Breakfast & Brunch",
+    keywords: ["Bubble Tea", "Donuts","Desserts","Chocolatiers & Shops","tea", "Coffee & Tea", "Coffee Roasteries","Colombian","american (traditional)", "traditional american", "Breakfast & Brunch", "classic american","barbecue_restaurant","american_restaurant","fast_food_restaurant","Chicken Shop","Chicken Wings"],
+  },
   {
     label: "Beer",
     keywords: ["Beer", "Beverage Store", "Brazilian", "breweries", "Spanish","bar","wine_bar","Night Club"],
   },
   {
     label: "Barbeque",
+    keywords: ["barbeque", "barbecue", "bbq", "smokehouse","barbecue_restaurant","bar_and_grill","Chicken Shop","Chicken Wings","Hot Dogs"],
+  },
+   {
+    label: "Butcher",
     keywords: ["barbeque", "barbecue", "bbq", "smokehouse","barbecue_restaurant","bar_and_grill","Chicken Shop","Chicken Wings","Hot Dogs"],
   },
   {
