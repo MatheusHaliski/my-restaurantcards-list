@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { User } from "firebase/auth";
 
@@ -33,9 +33,8 @@ type Restaurant = {
 };
 
 const parseRatingValue = (rating: unknown) => {
-  if (typeof rating === "number" && !Number.isNaN(rating)) {
-    return rating;
-  }
+  if (typeof rating === "number" && !Number.isNaN(rating)) return rating;
+
   if (typeof rating === "string") {
     const normalized = rating.trim().replace(",", ".");
     const match = normalized.match(/-?\d+(\.\d+)?/);
@@ -105,10 +104,11 @@ const COUNTRY_FLAG_OVERRIDES: Record<string, string> = {
 const getCountryLabel = (countryName: string) => {
   const trimmed = countryName.trim();
   const normalized = trimmed.toLowerCase();
+
   const override = COUNTRY_FLAG_OVERRIDES[normalized];
-  if (override) {
-    return `${override} ${trimmed}`;
-  }
+  if (override) return `${override} ${trimmed}`;
+
+  // Caso venha algo como "US" "BR"
   if (/^[a-z]{2}$/i.test(normalized)) {
     const chars = normalized.toUpperCase().split("");
     const flag = String.fromCodePoint(
@@ -116,9 +116,192 @@ const getCountryLabel = (countryName: string) => {
     );
     return `${flag} ${trimmed}`;
   }
-  const flag = "🌍";
-  return `${flag} ${trimmed}`;
+
+  return `🌍 ${trimmed}`;
 };
+
+// ---------- Custom Country Dropdown ----------
+function CountryDropdown({
+  value,
+  options,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  options: string[];
+  onChange: (next: string) => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  const selectedLabel = value ? getCountryLabel(value) : "🌍 All countries";
+
+  const filteredOptions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return options;
+
+    return options.filter((c) =>
+      String(c || "").toLowerCase().includes(q)
+    );
+  }, [options, query]);
+
+  // click outside
+  useEffect(() => {
+    if (!open) return;
+
+    const onDocMouseDown = (e: MouseEvent) => {
+      const el = rootRef.current;
+      if (!el) return;
+      if (e.target instanceof Node && !el.contains(e.target)) setOpen(false);
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("mousedown", onDocMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", onDocMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  // ao abrir, limpa query e foca input (best effort)
+  useEffect(() => {
+    if (!open) return;
+    setQuery("");
+    const t = setTimeout(() => {
+      const el = rootRef.current?.querySelector<HTMLInputElement>(
+        'input[data-country-search="1"]'
+      );
+      el?.focus();
+    }, 0);
+    return () => clearTimeout(t);
+  }, [open]);
+
+  return (
+    <div ref={rootRef} style={{ position: "relative" }}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        style={{
+          width: "100%",
+          textAlign: "left",
+          padding: "10px 12px",
+          borderRadius: "8px",
+          border: "1px solid #d1d5db",
+          background: disabled ? "#f3f4f6" : "#fff",
+          cursor: disabled ? "not-allowed" : "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+        }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+          {selectedLabel}
+        </span>
+        <span style={{ opacity: 0.7 }}>{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          aria-label="Country options"
+          style={{
+            position: "absolute",
+            zIndex: 50,
+            top: "calc(100% + 8px)",
+            left: 0,
+            right: 0,
+            background: "#fff",
+            border: "1px solid #e5e7eb",
+            borderRadius: "12px",
+            boxShadow: "0 12px 30px rgba(15, 23, 42, 0.18)",
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ padding: 10, borderBottom: "1px solid #e5e7eb" }}>
+            <input
+              data-country-search="1"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search country…"
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: "10px",
+                border: "1px solid #d1d5db",
+              }}
+            />
+          </div>
+
+          <div style={{ maxHeight: 280, overflowY: "auto" }}>
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+              }}
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                textAlign: "left",
+                background: value === "" ? "#eff6ff" : "#fff",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              🌍 All countries
+            </button>
+
+            {filteredOptions.length === 0 ? (
+              <div style={{ padding: "10px 12px", color: "#6b7280" }}>
+                No matches.
+              </div>
+            ) : (
+              filteredOptions.map((opt) => {
+                const isSelected = opt === value;
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => {
+                      onChange(opt);
+                      setOpen(false);
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      textAlign: "left",
+                      background: isSelected ? "#eff6ff" : "#fff",
+                      border: "none",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 10,
+                    }}
+                  >
+                    <span>{getCountryLabel(opt)}</span>
+                    {isSelected ? <span style={{ opacity: 0.8 }}>✓</span> : null}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function RestaurantCardsPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -156,7 +339,9 @@ export default function RestaurantCardsPage() {
 
         if (
           code === "permission-denied" ||
-          String(message).toLowerCase().includes("missing or insufficient permissions")
+          String(message)
+            .toLowerCase()
+            .includes("missing or insufficient permissions")
         ) {
           friendly =
             "Permission denied (Firestore Rules). You must allow read access to 'restaurants' or sign in.";
@@ -164,8 +349,12 @@ export default function RestaurantCardsPage() {
 
         if (
           String(message).toLowerCase().includes("not configured") ||
-          String(message).toLowerCase().includes("missing firebase env vars") ||
-          String(message).toLowerCase().includes("firebase app was not initialized")
+          String(message)
+            .toLowerCase()
+            .includes("missing firebase env vars") ||
+          String(message)
+            .toLowerCase()
+            .includes("firebase app was not initialized")
         ) {
           friendly =
             "Firebase config is missing. Check .env.local (NEXT_PUBLIC_FIREBASE_*) and restart `npm run dev`.";
@@ -251,13 +440,11 @@ export default function RestaurantCardsPage() {
 
   // Reset dependent filters when parent changes
   useEffect(() => {
-    // ao trocar country, limpa state/city
     setStateValue("");
     setCity("");
   }, [country]);
 
   useEffect(() => {
-    // ao trocar state, limpa city
     setCity("");
   }, [stateValue]);
 
@@ -278,7 +465,8 @@ export default function RestaurantCardsPage() {
       const matchesCategory = selectedCategory
         ? Array.isArray(r.categories)
           ? (r.categories as unknown[]).some(
-              (value) => String(value || "").toLowerCase() === selectedCategory
+              (value) =>
+                String(value || "").toLowerCase() === selectedCategory
             )
           : String(r.category || "").toLowerCase() === selectedCategory
         : true;
@@ -314,7 +502,6 @@ export default function RestaurantCardsPage() {
           flexWrap: "wrap",
         }}
       >
-        {/* Logo + título */}
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
           <img
             src="/friendly-eats.svg"
@@ -338,7 +525,6 @@ export default function RestaurantCardsPage() {
           </div>
         </div>
 
-        {/* Auth info */}
         <div style={{ textAlign: "right", minWidth: 220 }}>
           <div style={{ display: "flex", justifyContent: "flex-end" }}>
             {user?.photoURL ? (
@@ -418,22 +604,12 @@ export default function RestaurantCardsPage() {
             }}
           />
 
-          <select
+          {/* ✅ COUNTRY custom dropdown (flags work here) */}
+          <CountryDropdown
             value={country}
-            onChange={(event) => setCountry(event.target.value)}
-            style={{
-              padding: "10px 12px",
-              borderRadius: "8px",
-              border: "1px solid #d1d5db",
-            }}
-          >
-            <option value="">🌍 All countries</option>
-            {availableCountries.map((option) => (
-              <option key={option} value={option}>
-                {getCountryLabel(option)}
-              </option>
-            ))}
-          </select>
+            options={availableCountries}
+            onChange={setCountry}
+          />
 
           <select
             value={stateValue}
@@ -529,129 +705,126 @@ export default function RestaurantCardsPage() {
             gap: "16px",
           }}
         >
-{filteredRestaurants.map((restaurant) => {
-  // ✅ prioridade: starsgiven (restaurants), depois rating/grade
-  const ratingValueRaw =
-    restaurant.starsgiven ?? restaurant.rating ?? restaurant.grade ?? 0;
+          {filteredRestaurants.map((restaurant) => {
+            const ratingValueRaw =
+              restaurant.starsgiven ?? restaurant.rating ?? restaurant.grade ?? 0;
 
-  const { rounded, display } = getStarRating(ratingValueRaw);
+            const { rounded, display } = getStarRating(ratingValueRaw);
 
-  return (
-    <Link
-      key={restaurant.id}
-      href={`/restaurantinfopage/${restaurant.id}`}
-      style={{ textDecoration: "none", color: "inherit" }}
-    >
-      <article
-        style={{
-          border: "1px solid #e5e7eb",
-          borderRadius: "12px",
-          overflow: "hidden",
-          background: "#fff",
-          boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-          transition: "transform 150ms ease, box-shadow 150ms ease",
-        }}
-      >
-        {restaurant.photo ? (
-          <img
-            src={restaurant.photo}
-            alt={restaurant.name || "Restaurant"}
-            style={{
-              width: "100%",
-              height: "160px",
-              objectFit: "cover",
-              display: "block",
-            }}
-          />
-        ) : (
-          <div
-            aria-hidden="true"
-            style={{
-              width: "100%",
-              height: "160px",
-              background: "#f3f4f6",
-            }}
-          />
-        )}
-
-        <div style={{ padding: "16px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: "10px",
-            }}
-          >
-            <h3 style={{ margin: 0, fontSize: "18px", lineHeight: 1.2 }}>
-              {restaurant.name || "Unnamed Restaurant"}
-            </h3>
-
-            {/* ✅ starsgiven + estrelas preenchidas + número */}
-            <span
-              aria-label={`Restaurant rating ${display.toFixed(1)} out of 5`}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                fontWeight: 700,
-                whiteSpace: "nowrap",
-              }}
-            >
-              <span
-                style={{
-                  display: "inline-flex",
-                  gap: "2px",
-                  fontSize: "16px",
-                  lineHeight: 1,
-                }}
+            return (
+              <Link
+                key={restaurant.id}
+                href={`/restaurantinfopage/${restaurant.id}`}
+                style={{ textDecoration: "none", color: "inherit" }}
               >
-                {Array.from({ length: 5 }, (_, index) => (
-                  <span
-                    key={`star-${restaurant.id}-${index}`}
-                    style={{
-                      color: index < rounded ? "#f59e0b" : "#d1d5db",
-                    }}
-                  >
-                    ★
-                  </span>
-                ))}
-              </span>
+                <article
+                  style={{
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "12px",
+                    overflow: "hidden",
+                    background: "#fff",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                    transition: "transform 150ms ease, box-shadow 150ms ease",
+                  }}
+                >
+                  {restaurant.photo ? (
+                    <img
+                      src={restaurant.photo}
+                      alt={restaurant.name || "Restaurant"}
+                      style={{
+                        width: "100%",
+                        height: "160px",
+                        objectFit: "cover",
+                        display: "block",
+                      }}
+                    />
+                  ) : (
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        width: "100%",
+                        height: "160px",
+                        background: "#f3f4f6",
+                      }}
+                    />
+                  )}
 
-              <span style={{ fontSize: "13px", color: "#374151" }}>
-                {display.toFixed(1)}
-              </span>
-            </span>
-          </div>
+                  <div style={{ padding: "16px" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                        gap: "10px",
+                      }}
+                    >
+                      <h3 style={{ margin: 0, fontSize: "18px", lineHeight: 1.2 }}>
+                        {restaurant.name || "Unnamed Restaurant"}
+                      </h3>
 
-          <p style={{ margin: "10px 0 0", color: "#6b7280" }}>
-            {[
-              restaurant.address,
-              restaurant.street,
-              restaurant.city,
-              restaurant.state,
-            ]
-              .filter(Boolean)
-              .join(", ") || "Address unavailable."}
-          </p>
+                      <span
+                        aria-label={`Restaurant rating ${display.toFixed(1)} out of 5`}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontWeight: 700,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            gap: "2px",
+                            fontSize: "16px",
+                            lineHeight: 1,
+                          }}
+                        >
+                          {Array.from({ length: 5 }, (_, index) => (
+                            <span
+                              key={`star-${restaurant.id}-${index}`}
+                              style={{
+                                color: index < rounded ? "#f59e0b" : "#d1d5db",
+                              }}
+                            >
+                              ★
+                            </span>
+                          ))}
+                        </span>
 
-          <div style={{ marginTop: 10, fontSize: "13px", color: "#374151" }}>
-            <div>
-              {restaurant.city || "Unknown city"}
-              {restaurant.state ? `, ${restaurant.state}` : ""}
-            </div>
-            <div>
-              {restaurant.country
-                ? getCountryLabel(restaurant.country)
-                : "🌍 Unknown country"}
-            </div>
-          </div>
-        </div>
-      </article>
-    </Link>
-  );
-})}
+                        <span style={{ fontSize: "13px", color: "#374151" }}>
+                          {display.toFixed(1)}
+                        </span>
+                      </span>
+                    </div>
 
+                    <p style={{ margin: "10px 0 0", color: "#6b7280" }}>
+                      {[
+                        restaurant.address,
+                        restaurant.street,
+                        restaurant.city,
+                        restaurant.state,
+                      ]
+                        .filter(Boolean)
+                        .join(", ") || "Address unavailable."}
+                    </p>
+
+                    <div style={{ marginTop: 10, fontSize: "13px", color: "#374151" }}>
+                      <div>
+                        {restaurant.city || "Unknown city"}
+                        {restaurant.state ? `, ${restaurant.state}` : ""}
+                      </div>
+                      <div>
+                        {restaurant.country
+                          ? getCountryLabel(restaurant.country)
+                          : "🌍 Unknown country"}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </Link>
+            );
+          })}
         </div>
       </section>
     </div>
