@@ -554,7 +554,7 @@ const MAIN_CATEGORY_RULES = [
   },
   {
     label: "Beer",
-    keywords: ["beer", "beer bar", "brewery", "breweries", "brewpub","bar","wine_bar","Night Club"],
+    keywords: ["Beer", "Beverage Store", "Brazilian", "breweries", "Spanish","bar","wine_bar","Night Club"],
   },
   {
     label: "Barbeque",
