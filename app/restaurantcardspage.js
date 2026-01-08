@@ -10,11 +10,13 @@ import {
   subscribeToAuthChanges,
 } from "./auth";
 
-const getStarString = (rating) => {
-  const safeRating = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
-  return Array.from({ length: 5 }, (_, index) =>
-    index < safeRating ? "★" : "☆"
-  ).join("");
+const getStarRating = (rating) => {
+  const safeRating = Number(rating) || 0;
+  const rounded = Math.max(0, Math.min(5, Math.round(safeRating)));
+  return {
+    rounded,
+    display: Math.max(0, Math.min(5, safeRating)),
+  };
 };
 
 export default function RestaurantCardsPage() {
@@ -421,9 +423,61 @@ useEffect(() => {
                       gap: "8px",
                     }}
                   >
+                 <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "8px",
+                    }}
+                  >
                     <h3 style={{ margin: 0, fontSize: "18px" }}>
                       {restaurant.name || "Unnamed Restaurant"}
                     </h3>
+                    {(() => {
+                      const ratingValue =
+                        restaurant.rating ?? restaurant.grade ?? 0;
+                      const { rounded, display } = getStarRating(ratingValue);
+                      return (
+                        <span
+                          aria-label={`Restaurant rating ${display.toFixed(
+                            1
+                          )} out of 5`}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            fontWeight: 700,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              gap: "2px",
+                              fontSize: "16px",
+                              lineHeight: 1,
+                            }}
+                          >
+                            {Array.from({ length: 5 }, (_, index) => (
+                              <span
+                                key={`star-${restaurant.id}-${index}`}
+                                style={{
+                                  color:
+                                    index < rounded ? "#f59e0b" : "#d1d5db",
+                                }}
+                              >
+                                ★
+                              </span>
+                            ))}
+                          </span>
+                          <span style={{ fontSize: "13px", color: "#374151" }}>
+                            {display.toFixed(1)}
+                          </span>
+                        </span>
+                      );
+                    })()}
+                  </div>
                     <span
                       aria-label={`Restaurant rating ${Number(
                         restaurant.rating ?? restaurant.grade ?? 0
