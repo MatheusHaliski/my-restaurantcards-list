@@ -559,6 +559,18 @@ const MAIN_CATEGORY_RULES = [
     ],
   },
   {
+    label: "Hot Dogs",
+    keywords: [
+      "ice cream",
+      "ice cream & frozen yogurt",
+      "frozen yogurt",
+      "gelato",
+      "gelat",
+      "shaved ice",
+      ""
+    ],
+  },
+  {
     label: "Acai Bowls",
     keywords: ["acai", "açaí", "acai bowls"],
   },
@@ -631,6 +643,10 @@ const MAIN_CATEGORY_RULES = [
   {
     label: "Beverage Store",
     keywords: ["beverage store", "liquor store", "store"],
+  },
+   {
+    label: "Beer",
+    keywords: ["beverage store", "liquor store", "store","bar", "bars", "pub", "pubs", "sports bars", "cocktail bars", "wine bar", "wine bars"],
   },
 ];
 
