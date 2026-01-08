@@ -16,6 +16,8 @@ type Restaurant = {
   id: string;
   name?: string;
   photo?: string;
+  fallbackApplied?: boolean;
+  fallbackapplied?: boolean;
 
   rating?: number;
   grade?: number;
@@ -731,6 +733,28 @@ export default function RestaurantCardsPage() {
               restaurant.starsgiven ?? restaurant.rating ?? restaurant.grade ?? 0;
 
             const { rounded, display } = getStarRating(ratingValueRaw);
+            const categoryValues = Array.isArray(restaurant.categories)
+              ? restaurant.categories.map((item) => String(item))
+              : typeof restaurant.categories === "string"
+                ? restaurant.categories.split(",").map((item) => item.trim())
+                : restaurant.category
+                  ? [String(restaurant.category)]
+                  : [];
+            const cafeCategorySet = new Set([
+              "cafes",
+              "cafeteria",
+              "hong kong style cafe",
+              "themed cafes",
+            ]);
+            const hasCafeCategory = categoryValues.some((category) =>
+              cafeCategorySet.has(category.trim().toLowerCase())
+            );
+            const fallbackApplied = Boolean(
+              restaurant.fallbackApplied ?? restaurant.fallbackapplied
+            );
+            const cardImageSrc = fallbackApplied && hasCafeCategory
+              ? "/fallbackcafe.png"
+              : restaurant.photo;
 
             return (
               <Link
@@ -747,9 +771,9 @@ export default function RestaurantCardsPage() {
                     boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
                   }}
                 >
-                  {restaurant.photo ? (
+                  {cardImageSrc ? (
                     <img
-                      src={restaurant.photo}
+                      src={cardImageSrc}
                       alt={restaurant.name || "Restaurant"}
                       style={{
                         width: "100%",
