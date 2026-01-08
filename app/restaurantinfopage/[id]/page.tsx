@@ -75,14 +75,13 @@ export default function RestaurantInfoPage() {
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [authError, setAuthError] = useState("");
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const [user, setUser] = useState<User | null>(null);
 
 useEffect(() => {
   const unsubscribe = subscribeToAuthChanges((nextUser: User | null) => {
