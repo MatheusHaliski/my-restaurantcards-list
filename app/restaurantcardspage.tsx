@@ -133,8 +133,7 @@ function getCountryFlagPng(countryName: string | undefined | null): FlagAsset | 
   return COUNTRY_FLAG_PNG[key] ?? null;
 }
 
-const NEW_YORK_ADDRESS_REGEX =
-  /\b\d+\s+[^,]+,?\s*new york\b(?:,?\s*ny\b)?(?:\s+\d{5}(?:-\d{4})?)?(?:,\s*usa\b)?/i;
+const NEW_YORK_ADDRESS_REGEX = /\b\d+\s+[^,]+,?\s*new york\b/i;
 
 const getNormalizedLocation = (restaurant: Restaurant) => {
   const sourceAddress = [restaurant.address, restaurant.street]
