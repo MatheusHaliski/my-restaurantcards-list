@@ -16,7 +16,7 @@ type Restaurant = {
   id: string;
   name?: string;
   photo?: string;
-  description?: string;
+
   rating?: number;
   grade?: number;
   starsgiven?: number;
@@ -34,7 +34,6 @@ type Restaurant = {
 
 const parseRatingValue = (rating: unknown) => {
   if (typeof rating === "number" && !Number.isNaN(rating)) return rating;
-
   if (typeof rating === "string") {
     const normalized = rating.trim().replace(",", ".");
     const match = normalized.match(/-?\d+(\.\d+)?/);
@@ -47,107 +46,106 @@ const parseRatingValue = (rating: unknown) => {
 };
 
 const getStarRating = (rating: unknown) => {
-  const safeRating = parseRatingValue(rating);
-  const rounded = Math.max(0, Math.min(5, Math.round(safeRating)));
-  return {
-    rounded, // inteiro 0..5
-    display: Math.max(0, Math.min(5, safeRating)), // decimal 0..5
-  };
+  const safe = parseRatingValue(rating);
+  const rounded = Math.max(0, Math.min(5, Math.round(safe)));
+  return { rounded, display: Math.max(0, Math.min(5, safe)) };
 };
 
-const COUNTRY_FLAG_OVERRIDES: Record<string, string> = {
-  argentina: "🇦🇷",
-  australia: "🇦🇺",
-  austria: "🇦🇹",
-  belgium: "🇧🇪",
-  brazil: "🇧🇷",
-  canada: "🇨🇦",
-  chile: "🇨🇱",
-  china: "🇨🇳",
-  colombia: "🇨🇴",
-  denmark: "🇩🇰",
-  finland: "🇫🇮",
-  france: "🇫🇷",
-  germany: "🇩🇪",
-  greece: "🇬🇷",
-  india: "🇮🇳",
-  indonesia: "🇮🇩",
-  ireland: "🇮🇪",
-  israel: "🇮🇱",
-  italy: "🇮🇹",
-  japan: "🇯🇵",
-  mexico: "🇲🇽",
-  netherlands: "🇳🇱",
-  norway: "🇳🇴",
-  peru: "🇵🇪",
-  poland: "🇵🇱",
-  portugal: "🇵🇹",
-  "puerto rico": "🇵🇷",
-  romania: "🇷🇴",
-  "saudi arabia": "🇸🇦",
-  singapore: "🇸🇬",
-  "south africa": "🇿🇦",
-  spain: "🇪🇸",
-  sweden: "🇸🇪",
-  switzerland: "🇨🇭",
-  thailand: "🇹🇭",
-  turkey: "🇹🇷",
-  "united kingdom": "🇬🇧",
-  uk: "🇬🇧",
-  "united states": "🇺🇸",
-  usa: "🇺🇸",
-  "united states of america": "🇺🇸",
-  us: "🇺🇸",
-  vietnam: "🇻🇳",
+// --------------------
+// Flags via /public PNG
+// --------------------
+type FlagAsset = {
+  alt: string;
+  src: string; // e.g. "/brasil.png"
 };
 
-const getCountryLabel = (countryName: string) => {
-  const trimmed = countryName.trim();
-  const normalized = trimmed.toLowerCase();
+const COUNTRY_FLAG_PNG: Record<string, FlagAsset> = {
+  // normalize para minúsculo no lookup
+  brasil: { alt: "Brasil", src: "/brasil.png" },
+  brazil: { alt: "Brasil", src: "/brasil.png" },
+  br: { alt: "Brasil", src: "/brasil.png" },
 
-  const override = COUNTRY_FLAG_OVERRIDES[normalized];
-  if (override) return `${override} ${trimmed}`;
+  canada: { alt: "Canada", src: "/canada.png" },
+  ca: { alt: "Canada", src: "/canada.png" },
 
-  // Caso venha algo como "US" "BR"
-  if (/^[a-z]{2}$/i.test(normalized)) {
-    const chars = normalized.toUpperCase().split("");
-    const flag = String.fromCodePoint(
-      ...chars.map((char) => 127397 + char.charCodeAt(0))
-    );
-    return `${flag} ${trimmed}`;
-  }
-
-  return `🌍 ${trimmed}`;
+  "estados unidos": { alt: "Estados Unidos", src: "/estados-unidos.png" },
+  "estados-unidos": { alt: "Estados Unidos", src: "/estados-unidos.png" },
+  "united states": { alt: "Estados Unidos", src: "/estados-unidos.png" },
+  usa: { alt: "Estados Unidos", src: "/estados-unidos.png" },
+  us: { alt: "Estados Unidos", src: "/estados-unidos.png" },
 };
 
-// ---------- Custom Country Dropdown ----------
-function CountryDropdown({
+const normalizeKey = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/[._]/g, "-");
+
+function getCountryFlagPng(countryName: string | undefined | null): FlagAsset | null {
+  if (!countryName) return null;
+  const key = normalizeKey(countryName);
+  return COUNTRY_FLAG_PNG[key] ?? null;
+}
+
+// --------------------
+// Reusable SearchSelect
+// --------------------
+function SearchSelect<T extends string>({
   value,
   options,
   onChange,
+  placeholder,
+  searchPlaceholder,
   disabled,
+  getOptionKey,
+  getOptionLabel,
+  renderOption,
+  renderValue,
+  includeAllOption,
+  allLabel,
 }: {
-  value: string;
-  options: string[];
-  onChange: (next: string) => void;
+  value: T;
+  options: T[];
+  onChange: (next: T) => void;
+
+  placeholder: string;
+  searchPlaceholder: string;
+
   disabled?: boolean;
+
+  getOptionKey?: (opt: T) => string;
+  getOptionLabel: (opt: T) => string;
+
+  // como desenhar cada item na lista (opcional)
+  renderOption?: (opt: T, selected: boolean) => React.ReactNode;
+
+  // como desenhar o valor selecionado no botão (opcional)
+  renderValue?: (opt: T) => React.ReactNode;
+
+  includeAllOption?: boolean; // exemplo: "All countries"
+  allLabel?: string; // label do All
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  const selectedLabel = value ? getCountryLabel(value) : "🌍 All countries";
+  const hasValue = Boolean(value);
+  const buttonLabel = hasValue
+    ? renderValue
+      ? renderValue(value)
+      : getOptionLabel(value)
+    : allLabel ?? placeholder;
 
   const filteredOptions = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return options;
 
-    return options.filter((c) =>
-      String(c || "").toLowerCase().includes(q)
+    return options.filter((opt) =>
+      getOptionLabel(opt).toLowerCase().includes(q)
     );
-  }, [options, query]);
+  }, [options, query, getOptionLabel]);
 
-  // click outside
   useEffect(() => {
     if (!open) return;
 
@@ -163,22 +161,20 @@ function CountryDropdown({
 
     document.addEventListener("mousedown", onDocMouseDown);
     document.addEventListener("keydown", onKeyDown);
-
     return () => {
       document.removeEventListener("mousedown", onDocMouseDown);
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
 
-  // ao abrir, limpa query e foca input (best effort)
   useEffect(() => {
     if (!open) return;
     setQuery("");
     const t = setTimeout(() => {
-      const el = rootRef.current?.querySelector<HTMLInputElement>(
-        'input[data-country-search="1"]'
+      const input = rootRef.current?.querySelector<HTMLInputElement>(
+        'input[data-searchselect="1"]'
       );
-      el?.focus();
+      input?.focus();
     }, 0);
     return () => clearTimeout(t);
   }, [open]);
@@ -206,7 +202,7 @@ function CountryDropdown({
         }}
       >
         <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
-          {selectedLabel}
+          {buttonLabel}
         </span>
         <span style={{ opacity: 0.7 }}>{open ? "▲" : "▼"}</span>
       </button>
@@ -214,7 +210,6 @@ function CountryDropdown({
       {open && (
         <div
           role="listbox"
-          aria-label="Country options"
           style={{
             position: "absolute",
             zIndex: 50,
@@ -230,10 +225,10 @@ function CountryDropdown({
         >
           <div style={{ padding: 10, borderBottom: "1px solid #e5e7eb" }}>
             <input
-              data-country-search="1"
+              data-searchselect="1"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search country…"
+              placeholder={searchPlaceholder}
               style={{
                 width: "100%",
                 padding: "10px 12px",
@@ -244,23 +239,25 @@ function CountryDropdown({
           </div>
 
           <div style={{ maxHeight: 280, overflowY: "auto" }}>
-            <button
-              type="button"
-              onClick={() => {
-                onChange("");
-                setOpen(false);
-              }}
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                textAlign: "left",
-                background: value === "" ? "#eff6ff" : "#fff",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              🌍 All countries
-            </button>
+            {includeAllOption ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onChange("" as T);
+                  setOpen(false);
+                }}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  textAlign: "left",
+                  background: !value ? "#eff6ff" : "#fff",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                {allLabel ?? placeholder}
+              </button>
+            ) : null}
 
             {filteredOptions.length === 0 ? (
               <div style={{ padding: "10px 12px", color: "#6b7280" }}>
@@ -268,10 +265,12 @@ function CountryDropdown({
               </div>
             ) : (
               filteredOptions.map((opt) => {
-                const isSelected = opt === value;
+                const key = getOptionKey ? getOptionKey(opt) : String(opt);
+                const selected = opt === value;
+
                 return (
                   <button
-                    key={opt}
+                    key={key}
                     type="button"
                     onClick={() => {
                       onChange(opt);
@@ -281,7 +280,7 @@ function CountryDropdown({
                       width: "100%",
                       padding: "10px 12px",
                       textAlign: "left",
-                      background: isSelected ? "#eff6ff" : "#fff",
+                      background: selected ? "#eff6ff" : "#fff",
                       border: "none",
                       cursor: "pointer",
                       display: "flex",
@@ -290,8 +289,10 @@ function CountryDropdown({
                       gap: 10,
                     }}
                   >
-                    <span>{getCountryLabel(opt)}</span>
-                    {isSelected ? <span style={{ opacity: 0.8 }}>✓</span> : null}
+                    <span>
+                      {renderOption ? renderOption(opt, selected) : getOptionLabel(opt)}
+                    </span>
+                    {selected ? <span style={{ opacity: 0.8 }}>✓</span> : null}
                   </button>
                 );
               })
@@ -309,6 +310,7 @@ export default function RestaurantCardsPage() {
   const [error, setError] = useState("");
 
   const [nameQuery, setNameQuery] = useState("");
+
   const [country, setCountry] = useState("");
   const [stateValue, setStateValue] = useState("");
   const [city, setCity] = useState("");
@@ -339,9 +341,7 @@ export default function RestaurantCardsPage() {
 
         if (
           code === "permission-denied" ||
-          String(message)
-            .toLowerCase()
-            .includes("missing or insufficient permissions")
+          String(message).toLowerCase().includes("missing or insufficient permissions")
         ) {
           friendly =
             "Permission denied (Firestore Rules). You must allow read access to 'restaurants' or sign in.";
@@ -349,12 +349,8 @@ export default function RestaurantCardsPage() {
 
         if (
           String(message).toLowerCase().includes("not configured") ||
-          String(message)
-            .toLowerCase()
-            .includes("missing firebase env vars") ||
-          String(message)
-            .toLowerCase()
-            .includes("firebase app was not initialized")
+          String(message).toLowerCase().includes("missing firebase env vars") ||
+          String(message).toLowerCase().includes("firebase app was not initialized")
         ) {
           friendly =
             "Firebase config is missing. Check .env.local (NEXT_PUBLIC_FIREBASE_*) and restart `npm run dev`.";
@@ -374,7 +370,6 @@ export default function RestaurantCardsPage() {
     }
 
     loadRestaurants();
-
     return () => {
       isMounted = false;
     };
@@ -412,7 +407,7 @@ export default function RestaurantCardsPage() {
     }
   };
 
-  // Dependent filter options
+  // Options
   const availableCountries = useMemo(() => {
     const options = new Set<string>();
     restaurants.forEach((r) => r.country && options.add(r.country));
@@ -438,7 +433,9 @@ export default function RestaurantCardsPage() {
     return Array.from(options).sort();
   }, [restaurants, country, stateValue]);
 
-  // Reset dependent filters when parent changes
+  const availableCategories = useMemo(() => FOOD_CATEGORIES.slice().sort(), []);
+
+  // Reset dependents
   useEffect(() => {
     setStateValue("");
     setCity("");
@@ -465,16 +462,13 @@ export default function RestaurantCardsPage() {
       const matchesCategory = selectedCategory
         ? Array.isArray(r.categories)
           ? (r.categories as unknown[]).some(
-              (value) =>
-                String(value || "").toLowerCase() === selectedCategory
+              (value) => String(value || "").toLowerCase() === selectedCategory
             )
           : String(r.category || "").toLowerCase() === selectedCategory
         : true;
 
       const matchesStars =
-        minimumStars === null
-          ? true
-          : parseRatingValue(r.starsgiven) >= minimumStars;
+        minimumStars === null ? true : parseRatingValue(r.starsgiven) >= minimumStars;
 
       return (
         matchesName &&
@@ -516,9 +510,7 @@ export default function RestaurantCardsPage() {
           />
 
           <div>
-            <div style={{ fontSize: "20px", fontWeight: 700 }}>
-              FriendlyEats
-            </div>
+            <div style={{ fontSize: "20px", fontWeight: 700 }}>FriendlyEats</div>
             <div style={{ fontSize: "12px", opacity: 0.9 }}>
               Discover great places to eat
             </div>
@@ -547,9 +539,7 @@ export default function RestaurantCardsPage() {
             )}
           </div>
 
-          <div style={{ fontWeight: 600 }}>
-            {user?.displayName || user?.email || "Guest"}
-          </div>
+          <div style={{ fontWeight: 600 }}>{user?.displayName || user?.email || "Guest"}</div>
 
           {authError && (
             <div style={{ fontSize: "12px", color: "#fde68a", marginTop: 6 }}>
@@ -576,6 +566,7 @@ export default function RestaurantCardsPage() {
         </div>
       </header>
 
+      {/* Filters */}
       <section
         style={{
           marginTop: "24px",
@@ -604,87 +595,117 @@ export default function RestaurantCardsPage() {
             }}
           />
 
-          {/* ✅ COUNTRY custom dropdown (flags work here) */}
-          <CountryDropdown
+          {/* COUNTRY (PNG flags) */}
+          <SearchSelect
             value={country}
             options={availableCountries}
             onChange={setCountry}
+            placeholder="All countries"
+            allLabel="All countries"
+            includeAllOption
+            searchPlaceholder="Search country…"
+            getOptionLabel={(opt) => opt}
+            renderValue={(opt) => {
+              const flag = getCountryFlagPng(opt);
+              return (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  {flag ? (
+                    <img
+                      src={flag.src}
+                      alt={flag.alt}
+                      style={{ width: 18, height: 18, borderRadius: 4, objectFit: "cover" }}
+                    />
+                  ) : (
+                    <span aria-hidden="true">🌍</span>
+                  )}
+                  <span>{opt}</span>
+                </span>
+              );
+            }}
+            renderOption={(opt) => {
+              const flag = getCountryFlagPng(opt);
+              return (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  {flag ? (
+                    <img
+                      src={flag.src}
+                      alt={flag.alt}
+                      style={{ width: 18, height: 18, borderRadius: 4, objectFit: "cover" }}
+                    />
+                  ) : (
+                    <span aria-hidden="true">🌍</span>
+                  )}
+                  <span>{opt}</span>
+                </span>
+              );
+            }}
           />
 
-          <select
+          {/* STATE (same dropdown pattern) */}
+          <SearchSelect
             value={stateValue}
-            onChange={(event) => setStateValue(event.target.value)}
+            options={availableStates}
+            onChange={setStateValue}
+            placeholder="All states"
+            allLabel="All states"
+            includeAllOption
+            searchPlaceholder="Search state…"
+            getOptionLabel={(opt) => opt}
             disabled={!availableStates.length}
-            style={{
-              padding: "10px 12px",
-              borderRadius: "8px",
-              border: "1px solid #d1d5db",
-              background: !availableStates.length ? "#f3f4f6" : "#fff",
-            }}
-          >
-            <option value="">All states</option>
-            {availableStates.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+          />
 
-          <select
+          {/* CITY (same dropdown pattern) */}
+          <SearchSelect
             value={city}
-            onChange={(event) => setCity(event.target.value)}
+            options={availableCities}
+            onChange={setCity}
+            placeholder="All cities"
+            allLabel="All cities"
+            includeAllOption
+            searchPlaceholder="Search city…"
+            getOptionLabel={(opt) => opt}
             disabled={!availableCities.length}
-            style={{
-              padding: "10px 12px",
-              borderRadius: "8px",
-              border: "1px solid #d1d5db",
-              background: !availableCities.length ? "#f3f4f6" : "#fff",
-            }}
-          >
-            <option value="">All cities</option>
-            {availableCities.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+          />
 
-          <select
+          {/* CATEGORY (same dropdown + icon) */}
+          <SearchSelect
             value={category}
-            onChange={(event) => setCategory(event.target.value)}
-            style={{
-              padding: "10px 12px",
-              borderRadius: "8px",
-              border: "1px solid #d1d5db",
-            }}
-          >
-            <option value="">All categories</option>
-            {FOOD_CATEGORIES.map((option) => (
-              <option key={option} value={option}>
-                {getCategoryIcon(option)} {option}
-              </option>
-            ))}
-          </select>
+            options={availableCategories}
+            onChange={setCategory}
+            placeholder="All categories"
+            allLabel="All categories"
+            includeAllOption
+            searchPlaceholder="Search category…"
+            getOptionLabel={(opt) => opt}
+            renderValue={(opt) => (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <span aria-hidden="true">{getCategoryIcon(opt)}</span>
+                <span>{opt}</span>
+              </span>
+            )}
+            renderOption={(opt) => (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <span aria-hidden="true">{getCategoryIcon(opt)}</span>
+                <span>{opt}</span>
+              </span>
+            )}
+          />
 
-          <select
+          {/* STARS (same dropdown pattern) */}
+          <SearchSelect
             value={starsFilter}
-            onChange={(event) => setStarsFilter(event.target.value)}
-            style={{
-              padding: "10px 12px",
-              borderRadius: "8px",
-              border: "1px solid #d1d5db",
-            }}
-          >
-            <option value="">All star ratings</option>
-            {[1, 2, 3, 4, 5].map((value) => (
-              <option key={value} value={value}>
-                {value}+ stars
-              </option>
-            ))}
-          </select>
+            options={["1", "2", "3", "4", "5"]}
+            onChange={setStarsFilter}
+            placeholder="All star ratings"
+            allLabel="All star ratings"
+            includeAllOption
+            searchPlaceholder="Search stars…"
+            getOptionLabel={(opt) => `${opt}+ stars`}
+          />
         </div>
       </section>
 
+      {/* Results */}
       <section style={{ marginTop: "24px" }}>
         {loading && <p>Loading restaurants...</p>}
 
@@ -724,7 +745,6 @@ export default function RestaurantCardsPage() {
                     overflow: "hidden",
                     background: "#fff",
                     boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                    transition: "transform 150ms ease, box-shadow 150ms ease",
                   }}
                 >
                   {restaurant.photo ? (
@@ -814,10 +834,37 @@ export default function RestaurantCardsPage() {
                         {restaurant.city || "Unknown city"}
                         {restaurant.state ? `, ${restaurant.state}` : ""}
                       </div>
-                      <div>
-                        {restaurant.country
-                          ? getCountryLabel(restaurant.country)
-                          : "🌍 Unknown country"}
+
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                        {restaurant.country ? (
+                          (() => {
+                            const flag = getCountryFlagPng(restaurant.country);
+                            return (
+                              <>
+                                {flag ? (
+                                  <img
+                                    src={flag.src}
+                                    alt={flag.alt}
+                                    style={{
+                                      width: 18,
+                                      height: 18,
+                                      borderRadius: 4,
+                                      objectFit: "cover",
+                                    }}
+                                  />
+                                ) : (
+                                  <span aria-hidden="true">🌍</span>
+                                )}
+                                <span>{restaurant.country}</span>
+                              </>
+                            );
+                          })()
+                        ) : (
+                          <>
+                            <span aria-hidden="true">🌍</span>
+                            <span>Unknown country</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
