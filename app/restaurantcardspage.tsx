@@ -56,6 +56,57 @@ const getStarRating = (rating: unknown) => {
   };
 };
 
+const COUNTRY_FLAG_OVERRIDES: Record<string, string> = {
+  Argentina: "🇦🇷",
+  Australia: "🇦🇺",
+  Austria: "🇦🇹",
+  Belgium: "🇧🇪",
+  Brazil: "🇧🇷",
+  Canada: "🇨🇦",
+  Chile: "🇨🇱",
+  China: "🇨🇳",
+  Colombia: "🇨🇴",
+  Denmark: "🇩🇰",
+  Finland: "🇫🇮",
+  France: "🇫🇷",
+  Germany: "🇩🇪",
+  Greece: "🇬🇷",
+  India: "🇮🇳",
+  Indonesia: "🇮🇩",
+  Ireland: "🇮🇪",
+  Israel: "🇮🇱",
+  Italy: "🇮🇹",
+  Japan: "🇯🇵",
+  "Mexico": "🇲🇽",
+  Netherlands: "🇳🇱",
+  Norway: "🇳🇴",
+  Peru: "🇵🇪",
+  Poland: "🇵🇱",
+  Portugal: "🇵🇹",
+  "Puerto Rico": "🇵🇷",
+  Romania: "🇷🇴",
+  "Saudi Arabia": "🇸🇦",
+  Singapore: "🇸🇬",
+  "South Africa": "🇿🇦",
+  Spain: "🇪🇸",
+  Sweden: "🇸🇪",
+  Switzerland: "🇨🇭",
+  Thailand: "🇹🇭",
+  Turkey: "🇹🇷",
+  "United Kingdom": "🇬🇧",
+  UK: "🇬🇧",
+  "United States": "🇺🇸",
+  USA: "🇺🇸",
+  "United States of America": "🇺🇸",
+  Vietnam: "🇻🇳",
+};
+
+const getCountryLabel = (countryName: string) => {
+  const trimmed = countryName.trim();
+  const flag = COUNTRY_FLAG_OVERRIDES[trimmed] || "🌍";
+  return `${flag} ${trimmed}`;
+};
+
 export default function RestaurantCardsPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -363,10 +414,10 @@ export default function RestaurantCardsPage() {
               border: "1px solid #d1d5db",
             }}
           >
-            <option value="">All countries</option>
+            <option value="">🌍 All countries</option>
             {availableCountries.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {getCountryLabel(option)}
               </option>
             ))}
           </select>
