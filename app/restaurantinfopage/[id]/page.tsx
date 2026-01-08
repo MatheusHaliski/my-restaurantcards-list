@@ -432,9 +432,6 @@ export default function RestaurantInfoPage() {
             <h1 style={{ margin: "6px 0 10px", fontSize: "32px" }}>
               {String((restaurant as any).name || "Restaurant")}
             </h1>
-            <p style={{ margin: 0, color: "#e2e8f0", lineHeight: 1.6 }}>
-              {String((restaurant as any).description || "No description provided.")}
-            </p>
             <div style={{ marginTop: "16px", fontSize: "18px" }}>
               <span
                 aria-label={`Restaurant rating ${restaurantRating} out of 5`}
