@@ -440,129 +440,125 @@ export default function RestaurantCardsPage() {
             gap: "16px",
           }}
         >
-          {filteredRestaurants.map((restaurant) => {
-            const ratingValue =
-              restaurant.starsgiven ?? restaurant.rating ?? restaurant.grade ?? 0;
-            const { rounded, display } = getStarRating(ratingValue);
+{filteredRestaurants.map((restaurant) => {
+  // ✅ prioridade: starsgiven (restaurants), depois rating/grade
+  const ratingValueRaw =
+    restaurant.starsgiven ?? restaurant.rating ?? restaurant.grade ?? 0;
 
-            return (
-              <Link
-                key={restaurant.id}
-                href={`/restaurantinfopage/${restaurant.id}`}
-                style={{ textDecoration: "none", color: "inherit" }}
+  const { rounded, display } = getStarRating(ratingValueRaw);
+
+  return (
+    <Link
+      key={restaurant.id}
+      href={`/restaurantinfopage/${restaurant.id}`}
+      style={{ textDecoration: "none", color: "inherit" }}
+    >
+      <article
+        style={{
+          border: "1px solid #e5e7eb",
+          borderRadius: "12px",
+          overflow: "hidden",
+          background: "#fff",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+          transition: "transform 150ms ease, box-shadow 150ms ease",
+        }}
+      >
+        {restaurant.photo ? (
+          <img
+            src={restaurant.photo}
+            alt={restaurant.name || "Restaurant"}
+            style={{
+              width: "100%",
+              height: "160px",
+              objectFit: "cover",
+              display: "block",
+            }}
+          />
+        ) : (
+          <div
+            aria-hidden="true"
+            style={{
+              width: "100%",
+              height: "160px",
+              background: "#f3f4f6",
+            }}
+          />
+        )}
+
+        <div style={{ padding: "16px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: "10px",
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: "18px", lineHeight: 1.2 }}>
+              {restaurant.name || "Unnamed Restaurant"}
+            </h3>
+
+            {/* ✅ starsgiven + estrelas preenchidas + número */}
+            <span
+              aria-label={`Restaurant rating ${display.toFixed(1)} out of 5`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                fontWeight: 700,
+                whiteSpace: "nowrap",
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-flex",
+                  gap: "2px",
+                  fontSize: "16px",
+                  lineHeight: 1,
+                }}
               >
-                <article
-                  style={{
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "12px",
-                    overflow: "hidden",
-                    background: "#fff",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                    transition: "transform 150ms ease, box-shadow 150ms ease",
-                  }}
-                >
-                  {restaurant.photo ? (
-                    <img
-                      src={restaurant.photo}
-                      alt={restaurant.name || "Restaurant"}
-                      style={{
-                        width: "100%",
-                        height: "160px",
-                        objectFit: "cover",
-                        display: "block",
-                      }}
-                    />
-                  ) : (
-                    <div
-                      aria-hidden="true"
-                      style={{
-                        width: "100%",
-                        height: "160px",
-                        background: "#f3f4f6",
-                      }}
-                    />
-                  )}
+                {Array.from({ length: 5 }, (_, index) => (
+                  <span
+                    key={`star-${restaurant.id}-${index}`}
+                    style={{
+                      color: index < rounded ? "#f59e0b" : "#d1d5db",
+                    }}
+                  >
+                    ★
+                  </span>
+                ))}
+              </span>
 
-                  <div style={{ padding: "16px" }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
-                        gap: "10px",
-                      }}
-                    >
-                      <h3
-                        style={{
-                          margin: 0,
-                          fontSize: "18px",
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        {restaurant.name || "Unnamed Restaurant"}
-                      </h3>
+              <span style={{ fontSize: "13px", color: "#374151" }}>
+                {display.toFixed(1)}
+              </span>
+            </span>
+          </div>
 
-                      <span
-                        aria-label={`Restaurant rating ${display.toFixed(
-                          1
-                        )} out of 5`}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          fontWeight: 700,
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            gap: "2px",
-                            fontSize: "16px",
-                            lineHeight: 1,
-                          }}
-                        >
-                          {Array.from({ length: 5 }, (_, index) => (
-                            <span
-                              key={`star-${restaurant.id}-${index}`}
-                              style={{
-                                color: index < rounded ? "#f59e0b" : "#d1d5db",
-                              }}
-                            >
-                              ★
-                            </span>
-                          ))}
-                        </span>
+          <p style={{ margin: "10px 0 0", color: "#6b7280" }}>
+            {[
+              restaurant.address,
+              restaurant.street,
+              restaurant.city,
+              restaurant.state,
+            ]
+              .filter(Boolean)
+              .join(", ") || "Address unavailable."}
+          </p>
 
-                        <span style={{ fontSize: "13px", color: "#374151" }}>
-                          {display.toFixed(1)}
-                        </span>
-                      </span>
-                    </div>
+          <div style={{ marginTop: 10, fontSize: "13px", color: "#374151" }}>
+            <div>
+              {restaurant.city || "Unknown city"}
+              {restaurant.state ? `, ${restaurant.state}` : ""}
+            </div>
+            <div>{restaurant.country || "Unknown country"}</div>
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
+})}
 
-                    <p style={{ margin: "10px 0 0", color: "#6b7280" }}>
-                      {[
-                        restaurant.address,
-                        restaurant.street,
-                        restaurant.city,
-                        restaurant.state,
-                      ]
-                        .filter(Boolean)
-                        .join(", ") || "Address unavailable."}
-                    </p>
-
-                    <div style={{ marginTop: 10, fontSize: "13px", color: "#374151" }}>
-                      <div>
-                        {restaurant.city || "Unknown city"}
-                        {restaurant.state ? `, ${restaurant.state}` : ""}
-                      </div>
-                      <div>{restaurant.country || "Unknown country"}</div>
-                    </div>
-                  </div>
-                </article>
-              </Link>
-            );
-          })}
         </div>
       </section>
     </div>
