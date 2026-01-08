@@ -538,84 +538,100 @@ const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const MAIN_CATEGORY_RULES = [
   {
     label: "Burgers",
-    keywords: ["burger", "burgers", "hamburger", "cheeseburger","barbecue_restaurant","hamburger_restaurant","fast_food_restaurant","Chicken Shop","Chicken Wings"],
+    keywords: [
+      "burger",
+      "burgers",
+      "hamburger",
+      "cheeseburger",
+      "hamburger_restaurant",
+      "fast_food_restaurant",
+    ],
   },
-   {
+  {
     label: "Ice Cream & Frozen Yogurt",
-    keywords: ["burger", "burgers", "hamburger", "cheeseburger","Ice Cream & Frozen Yogurt","Gelat","fast_food_restaurant","Donuts","Breakfast & Brunch"],
+    keywords: [
+      "ice cream",
+      "ice cream & frozen yogurt",
+      "frozen yogurt",
+      "gelato",
+      "gelat",
+      "shaved ice",
+    ],
   },
-   {
+  {
     label: "Acai Bowls",
-    keywords: ["Ice Cream & Frozen Yogurt","Gelat","fast_food_restaurant","Donuts","Breakfast & Brunch"],
+    keywords: ["acai", "açaí", "acai bowls"],
   },
-   {
+  {
     label: "Donuts",
-    keywords: ["Donuts","Desserts","Chocolatiers & Shops","Breakfast & Brunch","Bubble Tea", "tea", "Coffee & Tea"],
+    keywords: ["donut", "donuts"],
   },
   {
     label: "Bakeries",
-    keywords: ["Donuts","Desserts","Chocolatiers & Shops","Breakfast & Brunch","Bubble Tea", "tea", "Coffee & Tea"],
+    keywords: ["bakery", "bakeries", "patisserie", "cake shop", "cupcake", "custom cakes"],
   },
   {
     label: "Breakfast & Brunch",
-    keywords: ["Donuts","Desserts","Chocolatiers & Shops","Breakfast & Brunch","Waffles","Bubble Tea", "tea", "Coffee & Tea", "Coffee Roasteries"],
+    keywords: ["breakfast", "brunch", "breakfast & brunch", "waffles", "pancakes"],
   },
   {
     label: "Cafe",
-    keywords: ["Bubble Tea", "tea", "Coffee & Tea", "Coffee Roasteries","Colombian","Breakfast & Brunch", "Hong Kong Style Cafe","cafes","cafeteria","Point Of Interest","fast_food_restaurant","Fast Food","Candy Store"],
+    keywords: [
+      "cafe",
+      "cafes",
+      "cafeteria",
+      "coffee",
+      "coffee & tea",
+      "coffee roasteries",
+      "tea",
+      "bubble tea",
+      "hong kong style cafe",
+    ],
   },
   {
     label: "American (New)",
-    keywords: ["american (new)", "new american", "modern american","barbecue_restaurant","american_restaurant","fast_food_restaurant","Chicken Shop","Chicken Wings"],
+    keywords: ["american (new)", "new american", "modern american", "american_restaurant"],
   },
   {
     label: "American (Traditional)",
-    keywords: ["american (traditional)", "traditional american", "Breakfast & Brunch", "classic american","barbecue_restaurant","american_restaurant","fast_food_restaurant","Chicken Shop","Chicken Wings"],
-  },
-   {
-    label: "Breakfast & Brunch",
-    keywords: ["Bubble Tea", "Donuts","Desserts","Chocolatiers & Shops","tea", "Coffee & Tea", "Coffee Roasteries","Colombian","american (traditional)", "traditional american", "Breakfast & Brunch", "classic american","barbecue_restaurant","american_restaurant","fast_food_restaurant","Chicken Shop","Chicken Wings"],
+    keywords: ["american (traditional)", "traditional american", "classic american"],
   },
   {
     label: "Beer",
-    keywords: ["Beer", "Beverage Store", "Brazilian", "breweries", "Spanish","bar","wine_bar","Night Club"],
+    keywords: ["beer", "beer bar", "brewery", "breweries", "brewpub", "gastropubs"],
+  },
+  {
+    label: "Bar",
+    keywords: ["bar", "bars", "pub", "pubs", "sports bars", "cocktail bars", "wine bar", "wine bars"],
   },
   {
     label: "Barbeque",
-    keywords: ["barbeque", "barbecue", "bbq", "smokehouse","barbecue_restaurant","bar_and_grill","Chicken Shop","Chicken Wings","Hot Dogs"],
-  },
-   {
-    label: "Butcher",
-    keywords: ["barbeque", "barbecue", "bbq", "smokehouse","barbecue_restaurant","bar_and_grill","Chicken Shop","Chicken Wings","Hot Dogs"],
+    keywords: ["bbq", "barbecue", "barbeque", "smokehouse", "barbecue_restaurant", "bar_and_grill"],
   },
   {
-    label: "Custom Cakes",
-    keywords: ["Donuts","Desserts","Chocolatiers & Shops","Breakfast & Brunch","Waffles","Bubble Tea", "tea", "Coffee & Tea", "Coffee Roasteries"],
-  },
-   {
     label: "Hot Dogs",
-    keywords: ["barbeque", "barbecue", "bbq", "smokehouse","barbecue_restaurant","bar_and_grill","Chicken Shop","Chicken Wings","Hot Dogs"],
+    keywords: ["hot dog", "hot dogs"],
   },
   {
-    label:"Beverage Store"
-    keywords: ["Beer", "beer bar", "brewery", "breweries", "brewpub","bar","wine_bar","night_club","store"],
+    label: "Pizza",
+    keywords: ["pizza", "pizza_restaurant"],
   },
   {
-    label:"Pizza"
-    keywords: ["italian_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","pizza_restaurant"],
-       },
-   {
-    label:"Italian"
-    keywords: ["italian_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","pizza_restaurant","Chicken Shop","Chicken Wings"],
-       },
-   {
-    label:"Japanese"
-    keywords: ["japanese_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","sushi_restaurant","Sushi","Japanese","Point Of Interest"],
-       },
-     {
-    label:"Spanish"
-    keywords: ["spanish_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","pizza_restaurant","Point Of Interest","Chicken Shop","Chicken Wings"],
-       },
+    label: "Italian",
+    keywords: ["italian", "italian_restaurant", "pasta", "pasta shops"],
+  },
+  {
+    label: "Japanese",
+    keywords: ["japanese", "japanese_restaurant", "sushi", "sushi_restaurant"],
+  },
+  {
+    label: "Spanish",
+    keywords: ["spanish", "spanish_restaurant", "tapas", "tapas bars", "tapas/small plates"],
+  },
+  {
+    label: "Beverage Store",
+    keywords: ["beverage store", "liquor store", "store"],
+  },
 ];
 
 const MAIN_CATEGORY_REGEX_RULES = MAIN_CATEGORY_RULES.map((rule) => ({
