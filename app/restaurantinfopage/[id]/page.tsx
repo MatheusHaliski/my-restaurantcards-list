@@ -24,7 +24,7 @@ import {
   subscribeToAuthChanges,
 } from "../../auth";
 import { firebaseApp, hasFirebaseConfig } from "../../firebaseClient";
-import { getCategoryIcon } from "../../categories";
+import { getCategoryIcon, normalizeCategoryLabel } from "../../categories";
 
 type RestaurantRecord = Record<string, unknown> & { id?: string };
 
@@ -293,16 +293,18 @@ export default function RestaurantInfoPage() {
     if (!categoryEntry) return [] as string[];
     const [, value] = categoryEntry;
     if (Array.isArray(value)) {
-      return value.map((item) => String(item)).filter(Boolean);
+      return value
+        .map((item) => normalizeCategoryLabel(String(item)))
+        .filter(Boolean);
     }
     if (typeof value === "string") {
       return value
         .split(",")
-        .map((item) => item.trim())
+        .map((item) => normalizeCategoryLabel(item))
         .filter(Boolean);
     }
     if (value) {
-      return [String(value)];
+      return [normalizeCategoryLabel(String(value))];
     }
     return [];
   }, [categoryEntry]);

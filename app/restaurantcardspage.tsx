@@ -6,7 +6,11 @@ import type { User } from "firebase/auth";
 import { doc, getFirestore, updateDoc } from "firebase/firestore";
 
 import { getRestaurants } from "./firebase";
-import { FOOD_CATEGORIES, getCategoryIcon } from "./categories";
+import {
+  FOOD_CATEGORIES,
+  getCategoryIcon,
+  normalizeCategoryLabel,
+} from "./categories";
 import {
   signInWithGoogle,
   signOutUser,
@@ -104,16 +108,18 @@ const SANDWICH_CATEGORY_SET = new Set([
 
 const getCategoryValues = (restaurant: Restaurant) => {
   if (Array.isArray(restaurant.categories)) {
-    return restaurant.categories.map((item) => String(item));
+    return restaurant.categories.map((item) =>
+      normalizeCategoryLabel(String(item))
+    );
   }
   if (typeof restaurant.categories === "string") {
     return restaurant.categories
       .split(",")
-      .map((item) => item.trim())
+      .map((item) => normalizeCategoryLabel(item))
       .filter(Boolean);
   }
   if (restaurant.category) {
-    return [String(restaurant.category)];
+    return [normalizeCategoryLabel(String(restaurant.category))];
   }
   return [];
 };
@@ -552,7 +558,13 @@ export default function RestaurantCardsPage() {
     return Array.from(options).sort();
   }, [normalizedRestaurants, country, stateValue]);
 
-  const availableCategories = useMemo(() => FOOD_CATEGORIES.slice().sort(), []);
+  const availableCategories = useMemo(
+    () =>
+      FOOD_CATEGORIES.map((category) => normalizeCategoryLabel(category))
+        .filter(Boolean)
+        .sort(),
+    []
+  );
 
   // Reset dependents
   useEffect(() => {
@@ -579,11 +591,9 @@ export default function RestaurantCardsPage() {
       const matchesCity = city ? r.city === city : true;
 
       const matchesCategory = selectedCategory
-        ? Array.isArray(r.categories)
-          ? (r.categories as unknown[]).some(
-              (value) => String(value || "").toLowerCase() === selectedCategory
-            )
-          : String(r.category || "").toLowerCase() === selectedCategory
+        ? getCategoryValues(r).some(
+            (value) => value.toLowerCase() === selectedCategory
+          )
         : true;
 
       const matchesStars =
@@ -858,13 +868,7 @@ export default function RestaurantCardsPage() {
               restaurant.starsgiven ?? restaurant.rating ?? restaurant.grade ?? 0;
 
             const { rounded, display } = getStarRating(ratingValueRaw);
-            const categoryValues = Array.isArray(restaurant.categories)
-              ? restaurant.categories.map((item) => String(item))
-              : typeof restaurant.categories === "string"
-                ? restaurant.categories.split(",").map((item) => item.trim())
-                : restaurant.category
-                  ? [String(restaurant.category)]
-                  : [];
+            const categoryValues = getCategoryValues(restaurant);
             const cafeCategorySet = new Set([
               "cafes",
               "cafeteria",
