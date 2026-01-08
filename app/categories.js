@@ -572,13 +572,17 @@ const MAIN_CATEGORY_RULES = [
     label: "Barbeque",
     keywords: ["barbeque", "barbecue", "bbq", "smokehouse","barbecue_restaurant","bar_and_grill","Chicken Shop","Chicken Wings","Hot Dogs"],
   },
+  {
+    label: "Custom Cakes",
+    keywords: ["Donuts","Desserts","Chocolatiers & Shops","Breakfast & Brunch","Waffles","Bubble Tea", "tea", "Coffee & Tea", "Coffee Roasteries"],
+  },
    {
     label: "Hot Dogs",
     keywords: ["barbeque", "barbecue", "bbq", "smokehouse","barbecue_restaurant","bar_and_grill","Chicken Shop","Chicken Wings","Hot Dogs"],
   },
   {
     label:"Beverage Store"
-    keywords: ["beer", "beer bar", "brewery", "breweries", "brewpub","bar","wine_bar","night_club","store"],
+    keywords: ["Beer", "beer bar", "brewery", "breweries", "brewpub","bar","wine_bar","night_club","store"],
   },
   {
     label:"Pizza"
