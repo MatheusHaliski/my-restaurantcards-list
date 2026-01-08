@@ -541,6 +541,10 @@ const MAIN_CATEGORY_RULES = [
     keywords: ["burger", "burgers", "hamburger", "cheeseburger","barbecue_restaurant","hamburger_restaurant","fast_food_restaurant"],
   },
   {
+    label: "Cafe",
+    keywords: ["coffe & tea", "tea", "coffe", "cafes","cafeteria","Point Of Interest","fast_food_restaurant","Fast Food","Candy Store"],
+  },
+  {
     label: "American (New)",
     keywords: ["american (new)", "new american", "modern american","barbecue_restaurant","american_restaurant","fast_food_restaurant"],
   },
@@ -550,7 +554,7 @@ const MAIN_CATEGORY_RULES = [
   },
   {
     label: "Beer",
-    keywords: ["beer", "beer bar", "brewery", "breweries", "brewpub","bar","wine_bar"],
+    keywords: ["beer", "beer bar", "brewery", "breweries", "brewpub","bar","wine_bar","Night Club"],
   },
   {
     label: "Barbeque",
@@ -570,11 +574,11 @@ const MAIN_CATEGORY_RULES = [
        },
    {
     label:"Japanese"
-    keywords: ["japanese_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","sushi_restaurant","sushi"],
+    keywords: ["japanese_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","sushi_restaurant","Sushi","Japanese","Point Of Interest"],
        },
      {
     label:"Spanish"
-    keywords: ["spanish_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","pizza_restaurant"],
+    keywords: ["spanish_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","pizza_restaurant","Point Of Interest"],
        },
 ];
 
