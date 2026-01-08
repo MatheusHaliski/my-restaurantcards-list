@@ -133,6 +133,29 @@ function getCountryFlagPng(countryName: string | undefined | null): FlagAsset | 
   return COUNTRY_FLAG_PNG[key] ?? null;
 }
 
+const NEW_YORK_ADDRESS_REGEX =
+  /\b\d+\s+[^,]+,?\s*new york\b(?:,?\s*ny\b)?(?:\s+\d{5}(?:-\d{4})?)?(?:,\s*usa\b)?/i;
+
+const getNormalizedLocation = (restaurant: Restaurant) => {
+  const sourceAddress = [restaurant.address, restaurant.street]
+    .filter(Boolean)
+    .join(", ");
+
+  if (sourceAddress && NEW_YORK_ADDRESS_REGEX.test(sourceAddress)) {
+    return {
+      city: "New York",
+      state: "NY",
+      country: "USA",
+    };
+  }
+
+  return {
+    city: restaurant.city,
+    state: restaurant.state,
+    country: restaurant.country,
+  };
+};
+
 // --------------------
 // Reusable SearchSelect
 // --------------------
@@ -495,31 +518,40 @@ export default function RestaurantCardsPage() {
     }
   };
 
+  const normalizedRestaurants = useMemo(
+    () =>
+      restaurants.map((restaurant) => ({
+        ...restaurant,
+        ...getNormalizedLocation(restaurant),
+      })),
+    [restaurants]
+  );
+
   // Options
   const availableCountries = useMemo(() => {
     const options = new Set<string>();
-    restaurants.forEach((r) => r.country && options.add(r.country));
+    normalizedRestaurants.forEach((r) => r.country && options.add(r.country));
     return Array.from(options).sort();
-  }, [restaurants]);
+  }, [normalizedRestaurants]);
 
   const availableStates = useMemo(() => {
     const options = new Set<string>();
-    restaurants.forEach((r) => {
+    normalizedRestaurants.forEach((r) => {
       if (country && r.country !== country) return;
       if (r.state) options.add(r.state);
     });
     return Array.from(options).sort();
-  }, [restaurants, country]);
+  }, [normalizedRestaurants, country]);
 
   const availableCities = useMemo(() => {
     const options = new Set<string>();
-    restaurants.forEach((r) => {
+    normalizedRestaurants.forEach((r) => {
       if (country && r.country !== country) return;
       if (stateValue && r.state !== stateValue) return;
       if (r.city) options.add(r.city);
     });
     return Array.from(options).sort();
-  }, [restaurants, country, stateValue]);
+  }, [normalizedRestaurants, country, stateValue]);
 
   const availableCategories = useMemo(() => FOOD_CATEGORIES.slice().sort(), []);
 
@@ -538,7 +570,7 @@ export default function RestaurantCardsPage() {
     const selectedCategory = category.trim().toLowerCase();
     const minimumStars = starsFilter ? Number(starsFilter) : null;
 
-    return restaurants.filter((r) => {
+    return normalizedRestaurants.filter((r) => {
       const matchesName = normalizedQuery
         ? String(r.name || "").toLowerCase().includes(normalizedQuery)
         : true;
@@ -567,7 +599,15 @@ export default function RestaurantCardsPage() {
         matchesStars
       );
     });
-  }, [restaurants, nameQuery, country, stateValue, city, category, starsFilter]);
+  }, [
+    normalizedRestaurants,
+    nameQuery,
+    country,
+    stateValue,
+    city,
+    category,
+    starsFilter,
+  ]);
 
   return (
     <div style={{ padding: "32px", fontFamily: "Arial, sans-serif" }}>
