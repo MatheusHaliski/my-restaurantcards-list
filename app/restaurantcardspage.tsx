@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { User } from "firebase/auth";
+import { doc, getFirestore, updateDoc } from "firebase/firestore";
 
 import { getRestaurants } from "./firebase";
 import { FOOD_CATEGORIES, getCategoryIcon } from "./categories";
@@ -11,6 +12,7 @@ import {
   signOutUser,
   subscribeToAuthChanges,
 } from "./auth";
+import { firebaseApp, hasFirebaseConfig } from "./firebaseClient";
 
 type Restaurant = {
   id: string;
@@ -33,6 +35,8 @@ type Restaurant = {
   categories?: unknown;
   category?: string;
 };
+
+const db = firebaseApp ? getFirestore(firebaseApp) : null;
 
 const parseRatingValue = (rating: unknown) => {
   if (typeof rating === "number" && !Number.isNaN(rating)) return rating;
@@ -83,6 +87,45 @@ const normalizeKey = (value: string) =>
     .toLowerCase()
     .replace(/\s+/g, " ")
     .replace(/[._]/g, "-");
+
+const CAFE_CATEGORY_SET = new Set([
+  "cafes",
+  "cafeteria",
+  "hong kong style cafe",
+  "themed cafes",
+]);
+const SANDWICH_CATEGORY_SET = new Set([
+  "sandwiches",
+  "sandwich shop",
+  "sandwich shops",
+  "sandwiches & wraps",
+  "sandwiches and wraps",
+]);
+
+const getCategoryValues = (restaurant: Restaurant) => {
+  if (Array.isArray(restaurant.categories)) {
+    return restaurant.categories.map((item) => String(item));
+  }
+  if (typeof restaurant.categories === "string") {
+    return restaurant.categories
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  if (restaurant.category) {
+    return [String(restaurant.category)];
+  }
+  return [];
+};
+
+const hasCafeCategory = (restaurant: Restaurant) =>
+  getCategoryValues(restaurant).some((category) =>
+    CAFE_CATEGORY_SET.has(category.trim().toLowerCase())
+  );
+const hasSandwichCategory = (restaurant: Restaurant) =>
+  getCategoryValues(restaurant).some((category) =>
+    SANDWICH_CATEGORY_SET.has(category.trim().toLowerCase())
+  );
 
 function getCountryFlagPng(countryName: string | undefined | null): FlagAsset | null {
   if (!countryName) return null;
@@ -310,6 +353,7 @@ export default function RestaurantCardsPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const updatedPhotoIdsRef = useRef(new Set<string>());
 
   const [nameQuery, setNameQuery] = useState("");
 
@@ -376,6 +420,48 @@ export default function RestaurantCardsPage() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!db || !hasFirebaseConfig) return;
+
+    const pendingUpdates = restaurants.filter(
+      (restaurant) =>
+        Boolean(restaurant.fallbackApplied ?? restaurant.fallbackapplied) &&
+        ((hasCafeCategory(restaurant) &&
+          restaurant.photo !== "/fallbackcafe.png") ||
+          (hasSandwichCategory(restaurant) &&
+            restaurant.photo !== "/fallbacksandwich.png")) &&
+        !updatedPhotoIdsRef.current.has(restaurant.id)
+    );
+
+    if (pendingUpdates.length === 0) return;
+
+    pendingUpdates.forEach((restaurant) => {
+      const nextPhoto = hasSandwichCategory(restaurant)
+        ? "/fallbacksandwich.png"
+        : "/fallbackcafe.png";
+      updatedPhotoIdsRef.current.add(restaurant.id);
+      updateDoc(doc(db, "restaurants", restaurant.id), {
+        photo: nextPhoto,
+      })
+        .then(() => {
+          setRestaurants((prev) =>
+            prev.map((item) =>
+              item.id === restaurant.id
+                ? { ...item, photo: nextPhoto }
+                : item
+            )
+          );
+        })
+        .catch((err) => {
+          updatedPhotoIdsRef.current.delete(restaurant.id);
+          console.error(
+            "[RestaurantCardsPage] Failed to update photo for fallback cafe:",
+            err
+          );
+        });
+    });
+  }, [restaurants]);
 
   // Auth listener
   useEffect(() => {
