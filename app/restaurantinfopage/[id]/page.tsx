@@ -1,5 +1,5 @@
 "use client";
-
+import type { User } from "firebase/auth";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import {
@@ -82,13 +82,16 @@ export default function RestaurantInfoPage() {
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = subscribeToAuthChanges((nextUser) => {
-      setUser(nextUser);
-    });
+  const [user, setUser] = useState<User | null>(null);
 
-    return () => unsubscribe();
-  }, []);
+useEffect(() => {
+  const unsubscribe = subscribeToAuthChanges((nextUser: User | null) => {
+    setUser(nextUser);
+  });
+
+  return () => unsubscribe();
+}, []);
+
 
   useEffect(() => {
     if (!id) {
