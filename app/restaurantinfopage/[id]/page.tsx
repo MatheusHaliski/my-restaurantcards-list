@@ -425,25 +425,44 @@ export default function RestaurantInfoPage() {
             )}
           </div>
 
-          <div>
-            <p style={{ margin: 0, fontSize: "14px", color: "#cbd5f5" }}>
-              Restaurant details
-            </p>
-            <h1 style={{ margin: "6px 0 10px", fontSize: "32px" }}>
-              {String((restaurant as any).name || "Restaurant")}
-            </h1>
-            <div style={{ marginTop: "16px", fontSize: "18px" }}>
-              <span
-                aria-label={`Restaurant rating ${restaurantRating} out of 5`}
-                style={{ color: "#facc15", fontWeight: 700 }}
-              >
-                {getStarString(restaurantRating)}
-              </span>
-              <span style={{ marginLeft: "10px", color: "#e2e8f0" }}>
-                {restaurantRating.toFixed(1)} / 5
-              </span>
-            </div>
-          </div>
+<div>
+  <p style={{ margin: 0, fontSize: "14px", color: "#cbd5f5" }}>
+    Restaurant details
+  </p>
+
+  {/* Nome */}
+  <h1 style={{ margin: "6px 0 6px", fontSize: "32px" }}>
+    {String((restaurant as any).name || "Restaurant")}
+  </h1>
+
+  {/* Address + Country */}
+  <p
+    style={{
+      margin: 0,
+      fontSize: "16px",
+      color: "#e2e8f0",
+      lineHeight: 1.5,
+    }}
+  >
+    {[ (restaurant as any).address, (restaurant as any).country ]
+      .filter(Boolean)
+      .join(" • ")}
+  </p>
+
+  {/* Rating */}
+  <div style={{ marginTop: "16px", fontSize: "18px" }}>
+    <span
+      aria-label={`Restaurant rating ${restaurantRating} out of 5`}
+      style={{ color: "#facc15", fontWeight: 700 }}
+    >
+      {getStarString(restaurantRating)}
+    </span>
+    <span style={{ marginLeft: "10px", color: "#e2e8f0" }}>
+      {restaurantRating.toFixed(1)} / 5
+    </span>
+  </div>
+</div>
+
         </div>
       </header>
 
