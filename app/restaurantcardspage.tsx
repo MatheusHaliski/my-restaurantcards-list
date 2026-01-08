@@ -558,13 +558,19 @@ export default function RestaurantCardsPage() {
     return Array.from(options).sort();
   }, [normalizedRestaurants, country, stateValue]);
 
-  const availableCategories = useMemo(
-    () =>
-      FOOD_CATEGORIES.map((category) => normalizeCategoryLabel(category))
-        .filter(Boolean)
-        .sort(),
-    []
-  );
+  const availableCategories = useMemo(() => {
+    const seen = new Set<string>();
+    const options: string[] = [];
+    FOOD_CATEGORIES.forEach((category) => {
+      const normalized = normalizeCategoryLabel(category);
+      if (!normalized) return;
+      const key = normalized.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      options.push(normalized);
+    });
+    return options.sort((a, b) => a.localeCompare(b));
+  }, []);
 
   // Reset dependents
   useEffect(() => {
