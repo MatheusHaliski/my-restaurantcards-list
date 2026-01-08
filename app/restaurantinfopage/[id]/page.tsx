@@ -97,6 +97,23 @@ const getStarString = (rating: number) => {
   ).join("");
 };
 
+const getFlagSrc = (country: string) => {
+  const normalized = country.trim().toLowerCase();
+  if (!normalized) return "";
+  if (normalized.includes("canada")) return "/canada.png";
+  if (normalized.includes("brazil") || normalized.includes("brasil")) {
+    return "/brasil.png";
+  }
+  if (
+    normalized.includes("united states") ||
+    normalized.includes("usa") ||
+    normalized.includes("estados")
+  ) {
+    return "/estados-unidos.png";
+  }
+  return "";
+};
+
 export default function RestaurantInfoPage() {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
@@ -378,6 +395,15 @@ export default function RestaurantInfoPage() {
     );
   }
 
+  const addressLine = [
+    (restaurant as any).address,
+    (restaurant as any).country,
+  ]
+    .filter(Boolean)
+    .join(" • ");
+  const countryName = String((restaurant as any).country || "");
+  const flagSrc = getFlagSrc(countryName);
+
   return (
     <div
       style={{
@@ -389,12 +415,12 @@ export default function RestaurantInfoPage() {
     >
       <header
         style={{
-          background: "#0f172a",
+          background: "linear-gradient(135deg, #1d4ed8, #2563eb)",
           color: "#fff",
           borderRadius: "18px",
           overflow: "hidden",
           marginBottom: "28px",
-          boxShadow: "0 12px 30px rgba(15, 23, 42, 0.35)",
+          boxShadow: "0 12px 30px rgba(37, 99, 235, 0.35)",
         }}
       >
         <div
@@ -426,43 +452,56 @@ export default function RestaurantInfoPage() {
             )}
           </div>
 
-<div>
-  <p style={{ margin: 0, fontSize: "14px", color: "#cbd5f5" }}>
-    Restaurant details
-  </p>
+          <div>
+            <p style={{ margin: 0, fontSize: "14px", color: "#dbeafe" }}>
+              Restaurant details
+            </p>
 
-  {/* Nome */}
-  <h1 style={{ margin: "6px 0 6px", fontSize: "32px" }}>
-    {String((restaurant as any).name || "Restaurant")}
-  </h1>
+            {/* Nome */}
+            <p style={{ margin: "6px 0 0", fontSize: "18px", fontWeight: 600 }}>
+              {String((restaurant as any).name || "Restaurant")}
+            </p>
 
-  {/* Address + Country */}
-  <p
-    style={{
-      margin: 0,
-      fontSize: "16px",
-      color: "#e2e8f0",
-      lineHeight: 1.5,
-    }}
-  >
-    {[ (restaurant as any).address, (restaurant as any).country ]
-      .filter(Boolean)
-      .join(" • ")}
-  </p>
+            {/* Address + Country */}
+            <h1
+              style={{
+                margin: "8px 0 6px",
+                fontSize: "28px",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                flexWrap: "wrap",
+              }}
+            >
+              {flagSrc ? (
+                <img
+                  src={flagSrc}
+                  alt={countryName ? `${countryName} flag` : "Country flag"}
+                  style={{
+                    width: "36px",
+                    height: "24px",
+                    borderRadius: "6px",
+                    objectFit: "cover",
+                    boxShadow: "0 4px 10px rgba(15, 23, 42, 0.3)",
+                  }}
+                />
+              ) : null}
+              <span>{addressLine || "Address unavailable"}</span>
+            </h1>
 
-  {/* Rating */}
-  <div style={{ marginTop: "16px", fontSize: "18px" }}>
-    <span
-      aria-label={`Restaurant rating ${restaurantRating} out of 5`}
-      style={{ color: "#facc15", fontWeight: 700 }}
-    >
-      {getStarString(restaurantRating)}
-    </span>
-    <span style={{ marginLeft: "10px", color: "#e2e8f0" }}>
-      {restaurantRating.toFixed(1)} / 5
-    </span>
-  </div>
-</div>
+            {/* Rating */}
+            <div style={{ marginTop: "16px", fontSize: "18px" }}>
+              <span
+                aria-label={`Restaurant rating ${restaurantRating} out of 5`}
+                style={{ color: "#facc15", fontWeight: 700 }}
+              >
+                {getStarString(restaurantRating)}
+              </span>
+              <span style={{ marginLeft: "10px", color: "#e2e8f0" }}>
+                {restaurantRating.toFixed(1)} / 5
+              </span>
+            </div>
+          </div>
 
         </div>
       </header>

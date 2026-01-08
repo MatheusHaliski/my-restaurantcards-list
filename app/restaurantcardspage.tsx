@@ -819,15 +819,27 @@ export default function RestaurantCardsPage() {
               restaurant.starsgiven ?? restaurant.rating ?? restaurant.grade ?? 0;
 
             const { rounded, display } = getStarRating(ratingValueRaw);
+            const categoryValues = Array.isArray(restaurant.categories)
+              ? restaurant.categories.map((item) => String(item))
+              : typeof restaurant.categories === "string"
+                ? restaurant.categories.split(",").map((item) => item.trim())
+                : restaurant.category
+                  ? [String(restaurant.category)]
+                  : [];
+            const cafeCategorySet = new Set([
+              "cafes",
+              "cafeteria",
+              "hong kong style cafe",
+              "themed cafes",
+            ]);
+            const hasCafeCategory = categoryValues.some((category) =>
+              cafeCategorySet.has(category.trim().toLowerCase())
+            );
             const fallbackApplied = Boolean(
               restaurant.fallbackApplied ?? restaurant.fallbackapplied
             );
-            const cardImageSrc = fallbackApplied
-              ? hasSandwichCategory(restaurant)
-                ? "/fallbacksandwich.png"
-                : hasCafeCategory(restaurant)
-                  ? "/fallbackcafe.png"
-                  : restaurant.photo
+            const cardImageSrc = fallbackApplied && hasCafeCategory
+              ? "/fallbackcafe.png"
               : restaurant.photo;
 
             return (
