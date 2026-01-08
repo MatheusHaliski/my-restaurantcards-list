@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import type { User } from "firebase/auth";
 import {
   addDoc,
   collection,
@@ -76,7 +75,7 @@ export default function RestaurantInfoPage() {
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [authError, setAuthError] = useState("");
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
@@ -84,7 +83,7 @@ export default function RestaurantInfoPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = subscribeToAuthChanges((nextUser: User | null) => {
+    const unsubscribe = subscribeToAuthChanges((nextUser) => {
       setUser(nextUser);
     });
 
