@@ -522,6 +522,42 @@ const CATEGORY_ICON_RULES = [
   { keywords: ["mediterranean", "greek"], icon: "🫒" },
 ];
 
+const CATEGORY_SUFFIXES = new Set([
+  "restaurant",
+  "restaurants",
+  "bar",
+  "bars",
+  "cafe",
+  "cafes",
+  "pub",
+  "pubs",
+]);
+
+const formatCategoryToken = (token) => {
+  if (!token) return "";
+  const trimmed = token.trim();
+  if (!trimmed) return "";
+  if (trimmed === trimmed.toUpperCase()) return trimmed;
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+};
+
+export const normalizeCategoryLabel = (category = "") => {
+  const raw = String(category).trim();
+  if (!raw) return "";
+  if (!raw.includes("_")) return raw;
+  const tokens = raw
+    .split("_")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  if (!tokens.length) return raw;
+  const last = tokens[tokens.length - 1];
+  if (last && CATEGORY_SUFFIXES.has(last.toLowerCase())) {
+    tokens.pop();
+  }
+  if (!tokens.length) return raw;
+  return tokens.map(formatCategoryToken).join(" ");
+};
+
 export const getCategoryIcon = (category = "") => {
   const normalized = String(category).toLowerCase();
   for (const rule of CATEGORY_ICON_RULES) {
