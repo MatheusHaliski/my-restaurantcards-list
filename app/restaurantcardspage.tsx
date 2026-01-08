@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { User } from "firebase/auth";
 
 import { getRestaurants } from "./firebase";
-import { FOOD_CATEGORIES } from "./categories";
+import { FOOD_CATEGORIES, getCategoryIcon } from "./categories";
 import {
   signInWithGoogle,
   signOutUser,
@@ -472,7 +472,7 @@ export default function RestaurantCardsPage() {
             <option value="">All categories</option>
             {FOOD_CATEGORIES.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {getCategoryIcon(option)} {option}
               </option>
             ))}
           </select>
@@ -627,7 +627,11 @@ export default function RestaurantCardsPage() {
               {restaurant.city || "Unknown city"}
               {restaurant.state ? `, ${restaurant.state}` : ""}
             </div>
-            <div>{restaurant.country || "Unknown country"}</div>
+            <div>
+              {restaurant.country
+                ? getCountryLabel(restaurant.country)
+                : "🌍 Unknown country"}
+            </div>
           </div>
         </div>
       </article>
