@@ -10,6 +10,13 @@ import {
   subscribeToAuthChanges,
 } from "./auth";
 
+const getStarString = (rating) => {
+  const safeRating = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
+  return Array.from({ length: 5 }, (_, index) =>
+    index < safeRating ? "★" : "☆"
+  ).join("");
+};
+
 export default function RestaurantCardsPage() {
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -406,11 +413,40 @@ useEffect(() => {
                   />
                 )}
                 <div style={{ padding: "16px" }}>
-                  <h3 style={{ margin: 0, fontSize: "18px" }}>
-                    {restaurant.name || "Unnamed Restaurant"}
-                  </h3>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "8px",
+                    }}
+                  >
+                    <h3 style={{ margin: 0, fontSize: "18px" }}>
+                      {restaurant.name || "Unnamed Restaurant"}
+                    </h3>
+                    <span
+                      aria-label={`Restaurant rating ${Number(
+                        restaurant.rating ?? restaurant.grade ?? 0
+                      ).toFixed(1)} out of 5`}
+                      style={{
+                        color: "#f59e0b",
+                        fontWeight: 700,
+                        fontSize: "14px",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {getStarString(restaurant.rating ?? restaurant.grade ?? 0)}
+                    </span>
+                  </div>
                   <p style={{ margin: "8px 0", color: "#6b7280" }}>
-                    {restaurant.description || "No description provided."}
+                    {[
+                      restaurant.address,
+                      restaurant.street,
+                      restaurant.city,
+                      restaurant.state,
+                    ]
+                      .filter(Boolean)
+                      .join(", ") || "Address unavailable."}
                   </p>
                   <div style={{ fontSize: "13px", color: "#374151" }}>
                     <div>
