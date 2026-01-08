@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { getRestaurants } from "./firebase";
 import { FOOD_CATEGORIES } from "./categories";
 import {
@@ -369,52 +370,58 @@ useEffect(() => {
           }}
         >
           {filteredRestaurants.map((restaurant) => (
-            <article
+            <Link
               key={restaurant.id}
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: "12px",
-                overflow: "hidden",
-                background: "#fff",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-              }}
+              href={`/restaurantinfopage/${restaurant.id}`}
+              style={{ textDecoration: "none", color: "inherit" }}
             >
-              {restaurant.photo ? (
-                <img
-                  src={restaurant.photo}
-                  alt={restaurant.name || "Restaurant"}
-                  style={{
-                    width: "100%",
-                    height: "160px",
-                    objectFit: "cover",
-                    display: "block",
-                  }}
-                />
-              ) : (
-                <div
-                  aria-hidden="true"
-                  style={{
-                    width: "100%",
-                    height: "160px",
-                    background: "#f3f4f6",
-                  }}
-                />
-              )}
-              <div style={{ padding: "16px" }}>
-                <h3 style={{ margin: 0, fontSize: "18px" }}>
-                  {restaurant.name || "Unnamed Restaurant"}
-                </h3>
-                <p style={{ margin: "8px 0", color: "#6b7280" }}>
-                  {restaurant.description || "No description provided."}
-                </p>
-                <div style={{ fontSize: "13px", color: "#374151" }}>
-                  <div>
-                    {restaurant.city || "Unknown city"}, {restaurant.state || ""}
+              <article
+                style={{
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  background: "#fff",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                }}
+              >
+                {restaurant.photo ? (
+                  <img
+                    src={restaurant.photo}
+                    alt={restaurant.name || "Restaurant"}
+                    style={{
+                      width: "100%",
+                      height: "160px",
+                      objectFit: "cover",
+                      display: "block",
+                    }}
+                  />
+                ) : (
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      width: "100%",
+                      height: "160px",
+                      background: "#f3f4f6",
+                    }}
+                  />
+                )}
+                <div style={{ padding: "16px" }}>
+                  <h3 style={{ margin: 0, fontSize: "18px" }}>
+                    {restaurant.name || "Unnamed Restaurant"}
+                  </h3>
+                  <p style={{ margin: "8px 0", color: "#6b7280" }}>
+                    {restaurant.description || "No description provided."}
+                  </p>
+                  <div style={{ fontSize: "13px", color: "#374151" }}>
+                    <div>
+                      {restaurant.city || "Unknown city"},{" "}
+                      {restaurant.state || ""}
+                    </div>
+                    <div>{restaurant.country || "Unknown country"}</div>
                   </div>
-                  <div>{restaurant.country || "Unknown country"}</div>
                 </div>
-              </div>
-            </article>
+              </article>
+            </Link>
           ))}
         </div>
       </section>

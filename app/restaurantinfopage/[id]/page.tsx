@@ -1,0 +1,580 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "next/navigation";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  getFirestore,
+  query,
+  serverTimestamp,
+  where,
+} from "firebase/firestore";
+import {
+  signInWithGoogle,
+  signOutUser,
+  subscribeToAuthChanges,
+} from "../../auth";
+import { firebaseApp, hasFirebaseConfig } from "../../firebaseClient";
+
+type RestaurantRecord = Record<string, unknown> & { id?: string };
+
+type ReviewRecord = {
+  id: string;
+  createdAt?: string;
+  grade?: number;
+  rating?: number;
+  restaurantId?: string;
+  text?: string;
+  timestamp?: { toDate?: () => Date } | null;
+  userDisplayName?: string;
+  userEmail?: string;
+  userId?: string;
+  userPhoto?: string;
+};
+
+const db = firebaseApp ? getFirestore(firebaseApp) : null;
+
+const formatValue = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return value.length ? value.join(", ") : "—";
+  }
+  if (value && typeof value === "object") {
+    return JSON.stringify(value);
+  }
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+  return String(value);
+};
+
+const toDateValue = (review: ReviewRecord) => {
+  if (review.createdAt) {
+    return new Date(review.createdAt);
+  }
+  if (review.timestamp?.toDate) {
+    return review.timestamp.toDate();
+  }
+  return new Date(0);
+};
+
+const getStarString = (rating: number) => {
+  const safeRating = Math.max(0, Math.min(5, Math.round(rating)));
+  return Array.from({ length: 5 }, (_, index) =>
+    index < safeRating ? "★" : "☆"
+  ).join("");
+};
+
+export default function RestaurantInfoPage() {
+  const params = useParams();
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const [restaurant, setRestaurant] = useState<RestaurantRecord | null>(null);
+  const [reviews, setReviews] = useState<ReviewRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [user, setUser] = useState<any>(null);
+  const [authError, setAuthError] = useState("");
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthChanges((nextUser) => {
+      setUser(nextUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!id) {
+      setError("Restaurant not found.");
+      setLoading(false);
+      return () => {};
+    }
+    let isMounted = true;
+
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        if (!db || !hasFirebaseConfig) {
+          throw new Error("Firestore is not configured.");
+        }
+
+        const restaurantRef = doc(db, "restaurants", id);
+        const restaurantSnap = await getDoc(restaurantRef);
+
+        if (!restaurantSnap.exists()) {
+          throw new Error("Restaurant not found.");
+        }
+
+        const reviewQuery = query(
+          collection(db, "review"),
+          where("restaurantId", "==", id)
+        );
+        const reviewSnap = await getDocs(reviewQuery);
+        const reviewItems = reviewSnap.docs.map((docItem) => ({
+          id: docItem.id,
+          ...docItem.data(),
+        }));
+
+        reviewItems.sort((a, b) =>
+          toDateValue(b as ReviewRecord).getTime() -
+          toDateValue(a as ReviewRecord).getTime()
+        );
+
+        if (isMounted) {
+          setRestaurant({ id: restaurantSnap.id, ...restaurantSnap.data() });
+          setReviews(reviewItems as ReviewRecord[]);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setError(err?.message || "Unable to load restaurant details.");
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  const handleSignIn = async () => {
+    setAuthError("");
+    try {
+      await signInWithGoogle();
+    } catch (signInError) {
+      setAuthError("Unable to sign in with Google.");
+    }
+  };
+
+  const handleSignOut = async () => {
+    setAuthError("");
+    try {
+      await signOutUser();
+    } catch (signOutError) {
+      setAuthError("Unable to sign out right now.");
+    }
+  };
+
+  const restaurantRating = useMemo(() => {
+    if (!restaurant) return 0;
+    const directRating = Number(restaurant.rating ?? restaurant.grade ?? 0);
+    if (!Number.isNaN(directRating) && directRating > 0) {
+      return directRating;
+    }
+    if (reviews.length) {
+      const total = reviews.reduce((sum, review) => {
+        const value = Number(review.rating ?? review.grade ?? 0);
+        return sum + (Number.isNaN(value) ? 0 : value);
+      }, 0);
+      return total / reviews.length;
+    }
+    return 0;
+  }, [restaurant, reviews]);
+
+  const restaurantDetails = useMemo(() => {
+    if (!restaurant) return [] as [string, unknown][];
+    return Object.entries(restaurant);
+  }, [restaurant]);
+
+  const handleSubmitReview = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!user) {
+      setSubmitError("Please sign in to leave a review.");
+      return;
+    }
+    if (!id) {
+      setSubmitError("Restaurant details are missing.");
+      return;
+    }
+    if (!reviewText.trim()) {
+      setSubmitError("Please add your review commentary.");
+      return;
+    }
+    if (!db || !hasFirebaseConfig) {
+      setSubmitError("Firestore is not configured.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setSubmitError("");
+
+      const payload = {
+        createdAt: new Date().toISOString(),
+        grade: reviewRating,
+        rating: reviewRating,
+        restaurantId: id,
+        text: reviewText.trim(),
+        timestamp: serverTimestamp(),
+        userDisplayName: user.displayName || "Anonymous",
+        userEmail: user.email || "",
+        userId: user.uid || "",
+        userPhoto: user.photoURL || "",
+      };
+
+      const docRef = await addDoc(collection(db, "review"), payload);
+      const newReview: ReviewRecord = {
+        id: docRef.id,
+        ...payload,
+      };
+
+      setReviews((prev) => [newReview, ...prev]);
+      setReviewText("");
+      setReviewRating(0);
+    } catch (err: any) {
+      setSubmitError(err?.message || "Unable to submit review.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ padding: "32px", fontFamily: "Arial, sans-serif" }}>
+        <p>Loading restaurant details...</p>
+      </div>
+    );
+  }
+
+  if (error || !restaurant) {
+    return (
+      <div style={{ padding: "32px", fontFamily: "Arial, sans-serif" }}>
+        <p style={{ color: "#b91c1c", fontWeight: 600 }}>
+          {error || "Restaurant not found."}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        padding: "32px",
+        fontFamily: "Arial, sans-serif",
+        background: "#f8fafc",
+        minHeight: "100vh",
+      }}
+    >
+      <header
+        style={{
+          background: "#0f172a",
+          color: "#fff",
+          borderRadius: "18px",
+          overflow: "hidden",
+          marginBottom: "28px",
+          boxShadow: "0 12px 30px rgba(15, 23, 42, 0.35)",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(200px, 320px) 1fr",
+            gap: "24px",
+            padding: "24px",
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              aspectRatio: "4 / 3",
+              borderRadius: "12px",
+              overflow: "hidden",
+              background: "#1e293b",
+            }}
+          >
+            {restaurant.photo ? (
+              <img
+                src={String(restaurant.photo)}
+                alt={String(restaurant.name || "Restaurant")}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <div
+                aria-hidden="true"
+                style={{ width: "100%", height: "100%" }}
+              />
+            )}
+          </div>
+          <div>
+            <p style={{ margin: 0, fontSize: "14px", color: "#cbd5f5" }}>
+              Restaurant details
+            </p>
+            <h1 style={{ margin: "6px 0 10px", fontSize: "32px" }}>
+              {String(restaurant.name || "Restaurant")}
+            </h1>
+            <p style={{ margin: 0, color: "#e2e8f0", lineHeight: 1.6 }}>
+              {String(restaurant.description || "No description provided.")}
+            </p>
+            <div style={{ marginTop: "16px", fontSize: "18px" }}>
+              <span
+                aria-label={`Restaurant rating ${restaurantRating} out of 5`}
+                style={{ color: "#facc15", fontWeight: 700 }}
+              >
+                {getStarString(restaurantRating)}
+              </span>
+              <span style={{ marginLeft: "10px", color: "#e2e8f0" }}>
+                {restaurantRating.toFixed(1)} / 5
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section
+        style={{
+          background: "#fff",
+          borderRadius: "16px",
+          padding: "20px 24px",
+          boxShadow: "0 10px 20px rgba(15, 23, 42, 0.08)",
+          marginBottom: "24px",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Restaurant information</h2>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: "12px",
+          }}
+        >
+          {restaurantDetails.map(([key, value]) => (
+            <div
+              key={key}
+              style={{
+                background: "#f8fafc",
+                borderRadius: "10px",
+                padding: "12px",
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <div style={{ fontSize: "12px", color: "#475569" }}>{key}</div>
+              <div style={{ fontWeight: 600, marginTop: "4px" }}>
+                {formatValue(value)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section
+        style={{
+          background: "#fff",
+          borderRadius: "16px",
+          padding: "24px",
+          boxShadow: "0 10px 20px rgba(15, 23, 42, 0.08)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "16px",
+            flexWrap: "wrap",
+          }}
+        >
+          <h2 style={{ margin: 0 }}>Reviews</h2>
+          <div>
+            {user ? (
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                <span style={{ color: "#475569" }}>
+                  Signed in as {user.displayName || user.email}
+                </span>
+                <button
+                  onClick={handleSignOut}
+                  style={{
+                    border: "1px solid #cbd5f5",
+                    background: "#fff",
+                    padding: "6px 12px",
+                    borderRadius: "999px",
+                    cursor: "pointer",
+                  }}
+                  type="button"
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleSignIn}
+                style={{
+                  border: "none",
+                  background: "#2563eb",
+                  color: "#fff",
+                  padding: "8px 16px",
+                  borderRadius: "999px",
+                  cursor: "pointer",
+                }}
+                type="button"
+              >
+                Sign in to review
+              </button>
+            )}
+            {authError && (
+              <p style={{ marginTop: "8px", color: "#b91c1c" }}>
+                {authError}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div style={{ marginTop: "20px" }}>
+          {reviews.length === 0 ? (
+            <p style={{ color: "#64748b" }}>No reviews yet.</p>
+          ) : (
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {reviews.map((review) => (
+                <li
+                  key={review.id}
+                  style={{
+                    display: "flex",
+                    gap: "14px",
+                    padding: "14px 0",
+                    borderBottom: "1px solid #e2e8f0",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "48px",
+                      height: "48px",
+                      borderRadius: "50%",
+                      overflow: "hidden",
+                      background: "#e2e8f0",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {review.userPhoto ? (
+                      <img
+                        src={review.userPhoto}
+                        alt={review.userDisplayName || "Reviewer"}
+                        style={{ width: "100%", height: "100%" }}
+                      />
+                    ) : null}
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <strong>
+                        {review.userDisplayName || "Anonymous reviewer"}
+                      </strong>
+                      <span style={{ color: "#f59e0b" }}>
+                        {getStarString(Number(review.rating ?? review.grade ?? 0))}
+                      </span>
+                    </div>
+                    <p style={{ margin: "6px 0", color: "#475569" }}>
+                      {review.text || "No commentary provided."}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div
+          style={{
+            marginTop: "24px",
+            paddingTop: "20px",
+            borderTop: "1px solid #e2e8f0",
+          }}
+        >
+          <h3 style={{ marginTop: 0 }}>Leave a review</h3>
+          {!user && (
+            <p style={{ color: "#64748b" }}>
+              Sign in to share your experience with this restaurant.
+            </p>
+          )}
+          <form onSubmit={handleSubmitReview}>
+            <label
+              style={{ display: "block", marginBottom: "6px", fontWeight: 600 }}
+              htmlFor="review-rating"
+            >
+              Your rating
+            </label>
+            <select
+              id="review-rating"
+              value={reviewRating}
+              onChange={(event) =>
+                setReviewRating(Number(event.target.value))
+              }
+              style={{
+                padding: "8px",
+                borderRadius: "8px",
+                border: "1px solid #cbd5f5",
+                marginBottom: "16px",
+                width: "160px",
+              }}
+            >
+              {[0, 1, 2, 3, 4, 5].map((value) => (
+                <option key={value} value={value}>
+                  {value} star{value === 1 ? "" : "s"}
+                </option>
+              ))}
+            </select>
+
+            <label
+              style={{ display: "block", marginBottom: "6px", fontWeight: 600 }}
+              htmlFor="review-text"
+            >
+              Commentary
+            </label>
+            <textarea
+              id="review-text"
+              value={reviewText}
+              onChange={(event) => setReviewText(event.target.value)}
+              rows={4}
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "10px",
+                border: "1px solid #cbd5f5",
+                resize: "vertical",
+              }}
+            />
+
+            {submitError && (
+              <p style={{ color: "#b91c1c", marginTop: "12px" }}>
+                {submitError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                marginTop: "14px",
+                background: submitting ? "#94a3b8" : "#16a34a",
+                color: "#fff",
+                border: "none",
+                padding: "10px 18px",
+                borderRadius: "10px",
+                cursor: submitting ? "not-allowed" : "pointer",
+              }}
+            >
+              {submitting ? "Submitting..." : "Submit review"}
+            </button>
+          </form>
+        </div>
+      </section>
+    </div>
+  );
+}
