@@ -73,6 +73,21 @@ const toDateValue = (review: ReviewRecord) => {
   return new Date(0);
 };
 
+const parseRatingValue = (rating: unknown) => {
+  if (typeof rating === "number" && !Number.isNaN(rating)) {
+    return rating;
+  }
+  if (typeof rating === "string") {
+    const normalized = rating.trim().replace(",", ".");
+    const match = normalized.match(/-?\d+(\.\d+)?/);
+    if (match) {
+      const parsed = Number(match[0]);
+      return Number.isNaN(parsed) ? 0 : parsed;
+    }
+  }
+  return 0;
+};
+
 const getStarString = (rating: number) => {
   const safeRating = Math.max(0, Math.min(5, Math.round(rating)));
   return Array.from({ length: 5 }, (_, index) =>
@@ -187,14 +202,16 @@ export default function RestaurantInfoPage() {
 
   const restaurantRating = useMemo(() => {
     if (!restaurant) return 0;
-    const directRating = Number((restaurant as any).rating ?? (restaurant as any).grade ?? 0);
-    if (!Number.isNaN(directRating) && directRating > 0) {
+    const directRating = parseRatingValue(
+      (restaurant as any).rating ?? (restaurant as any).grade ?? 0
+    );
+    if (directRating > 0) {
       return directRating;
     }
     if (reviews.length) {
       const total = reviews.reduce((sum, review) => {
-        const value = Number(review.rating ?? review.grade ?? 0);
-        return sum + (Number.isNaN(value) ? 0 : value);
+        const value = parseRatingValue(review.rating ?? review.grade ?? 0);
+        return sum + value;
       }, 0);
       return total / reviews.length;
     }
