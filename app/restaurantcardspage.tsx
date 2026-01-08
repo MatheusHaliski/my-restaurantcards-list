@@ -66,6 +66,7 @@ export default function RestaurantCardsPage() {
   const [stateValue, setStateValue] = useState("");
   const [city, setCity] = useState("");
   const [category, setCategory] = useState("");
+  const [starsFilter, setStarsFilter] = useState("");
 
   const [user, setUser] = useState<User | null>(null);
   const [authError, setAuthError] = useState("");
@@ -199,6 +200,7 @@ export default function RestaurantCardsPage() {
   const filteredRestaurants = useMemo(() => {
     const normalizedQuery = nameQuery.trim().toLowerCase();
     const selectedCategory = category.trim().toLowerCase();
+    const minimumStars = starsFilter ? Number(starsFilter) : null;
 
     return restaurants.filter((r) => {
       const matchesName = normalizedQuery
@@ -217,15 +219,21 @@ export default function RestaurantCardsPage() {
           : String(r.category || "").toLowerCase() === selectedCategory
         : true;
 
+      const matchesStars =
+        minimumStars === null
+          ? true
+          : parseRatingValue(r.starsgiven) >= minimumStars;
+
       return (
         matchesName &&
         matchesCountry &&
         matchesState &&
         matchesCity &&
-        matchesCategory
+        matchesCategory &&
+        matchesStars
       );
     });
-  }, [restaurants, nameQuery, country, stateValue, city, category]);
+  }, [restaurants, nameQuery, country, stateValue, city, category, starsFilter]);
 
   return (
     <div style={{ padding: "32px", fontFamily: "Arial, sans-serif" }}>
@@ -414,6 +422,23 @@ export default function RestaurantCardsPage() {
             {FOOD_CATEGORIES.map((option) => (
               <option key={option} value={option}>
                 {option}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={starsFilter}
+            onChange={(event) => setStarsFilter(event.target.value)}
+            style={{
+              padding: "10px 12px",
+              borderRadius: "8px",
+              border: "1px solid #d1d5db",
+            }}
+          >
+            <option value="">All star ratings</option>
+            {[1, 2, 3, 4, 5].map((value) => (
+              <option key={value} value={value}>
+                {value}+ stars
               </option>
             ))}
           </select>
