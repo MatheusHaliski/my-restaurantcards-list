@@ -559,18 +559,6 @@ const MAIN_CATEGORY_RULES = [
     ],
   },
   {
-    label: "Hot Dogs",
-    keywords: [
-      "ice cream",
-      "ice cream & frozen yogurt",
-      "frozen yogurt",
-      "gelato",
-      "gelat",
-      "shaved ice",
-      ""
-    ],
-  },
-  {
     label: "Acai Bowls",
     keywords: ["acai", "açaí", "acai bowls"],
   },
@@ -602,11 +590,11 @@ const MAIN_CATEGORY_RULES = [
   },
   {
     label: "American (New)",
-    keywords: ["american (new)", "new american", "modern american", "american_restaurant"],
+    keywords: ["american (new)", "new american", "modern american", "american_restaurant","burgers","restaurant"],
   },
   {
     label: "American (Traditional)",
-    keywords: ["american (traditional)", "traditional american", "classic american"],
+    keywords: ["american (traditional)", "traditional american", "classic american","burgers","restaurant"],
   },
   {
     label: "Beer",
@@ -622,15 +610,15 @@ const MAIN_CATEGORY_RULES = [
   },
   {
     label: "Hot Dogs",
-    keywords: ["hot dog", "hot dogs"],
+    keywords: ["hot dog", "hot dogs","restaurant"],
   },
   {
     label: "Pizza",
-    keywords: ["pizza", "pizza_restaurant"],
+    keywords: ["pizza", "pizza_restaurant","restaurant","italian"],
   },
   {
     label: "Italian",
-    keywords: ["italian", "italian_restaurant", "pasta", "pasta shops"],
+    keywords: ["italian", "italian_restaurant", "pasta", "pasta shops","restaurant"]],
   },
   {
     label: "Japanese",
