@@ -12,6 +12,7 @@ import {
   getFirestore,
   query,
   serverTimestamp,
+  updateDoc,
   where,
   Timestamp,
   type FieldValue,
@@ -200,23 +201,44 @@ export default function RestaurantInfoPage() {
     }
   };
 
+  const reviewAverage = useMemo(() => {
+    if (!reviews.length) return 0;
+    const total = reviews.reduce((sum, review) => {
+      const value = parseRatingValue(review.rating ?? review.grade ?? 0);
+      return sum + value;
+    }, 0);
+    return total / reviews.length;
+  }, [reviews]);
+
   const restaurantRating = useMemo(() => {
     if (!restaurant) return 0;
     const directRating = parseRatingValue(
       (restaurant as any).rating ?? (restaurant as any).grade ?? 0
     );
-    if (directRating > 0) {
-      return directRating;
+    return reviews.length ? reviewAverage : directRating;
+  }, [restaurant, reviewAverage, reviews.length]);
+
+  useEffect(() => {
+    if (!db || !hasFirebaseConfig || !id || !restaurant) return;
+
+    const nextStars = Number(reviewAverage.toFixed(2));
+    const currentStars = parseRatingValue((restaurant as any).starsgiven ?? 0);
+
+    if (nextStars === Number(currentStars.toFixed(2))) {
+      return;
     }
-    if (reviews.length) {
-      const total = reviews.reduce((sum, review) => {
-        const value = parseRatingValue(review.rating ?? review.grade ?? 0);
-        return sum + value;
-      }, 0);
-      return total / reviews.length;
-    }
-    return 0;
-  }, [restaurant, reviews]);
+
+    const restaurantRef = doc(db, "restaurants", id);
+    updateDoc(restaurantRef, { starsgiven: nextStars })
+      .then(() => {
+        setRestaurant((prev) =>
+          prev ? { ...prev, starsgiven: nextStars } : prev
+        );
+      })
+      .catch((err) => {
+        console.error("Failed to sync starsgiven:", err);
+      });
+  }, [id, restaurant, reviewAverage, db, hasFirebaseConfig]);
 
   const restaurantDetails = useMemo(() => {
     if (!restaurant) return [] as [string, unknown][];
