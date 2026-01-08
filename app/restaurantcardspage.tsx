@@ -57,53 +57,66 @@ const getStarRating = (rating: unknown) => {
 };
 
 const COUNTRY_FLAG_OVERRIDES: Record<string, string> = {
-  Argentina: "🇦🇷",
-  Australia: "🇦🇺",
-  Austria: "🇦🇹",
-  Belgium: "🇧🇪",
-  Brazil: "🇧🇷",
-  Canada: "🇨🇦",
-  Chile: "🇨🇱",
-  China: "🇨🇳",
-  Colombia: "🇨🇴",
-  Denmark: "🇩🇰",
-  Finland: "🇫🇮",
-  France: "🇫🇷",
-  Germany: "🇩🇪",
-  Greece: "🇬🇷",
-  India: "🇮🇳",
-  Indonesia: "🇮🇩",
-  Ireland: "🇮🇪",
-  Israel: "🇮🇱",
-  Italy: "🇮🇹",
-  Japan: "🇯🇵",
-  "Mexico": "🇲🇽",
-  Netherlands: "🇳🇱",
-  Norway: "🇳🇴",
-  Peru: "🇵🇪",
-  Poland: "🇵🇱",
-  Portugal: "🇵🇹",
-  "Puerto Rico": "🇵🇷",
-  Romania: "🇷🇴",
-  "Saudi Arabia": "🇸🇦",
-  Singapore: "🇸🇬",
-  "South Africa": "🇿🇦",
-  Spain: "🇪🇸",
-  Sweden: "🇸🇪",
-  Switzerland: "🇨🇭",
-  Thailand: "🇹🇭",
-  Turkey: "🇹🇷",
-  "United Kingdom": "🇬🇧",
-  UK: "🇬🇧",
-  "United States": "🇺🇸",
-  USA: "🇺🇸",
-  "United States of America": "🇺🇸",
-  Vietnam: "🇻🇳",
+  argentina: "🇦🇷",
+  australia: "🇦🇺",
+  austria: "🇦🇹",
+  belgium: "🇧🇪",
+  brazil: "🇧🇷",
+  canada: "🇨🇦",
+  chile: "🇨🇱",
+  china: "🇨🇳",
+  colombia: "🇨🇴",
+  denmark: "🇩🇰",
+  finland: "🇫🇮",
+  france: "🇫🇷",
+  germany: "🇩🇪",
+  greece: "🇬🇷",
+  india: "🇮🇳",
+  indonesia: "🇮🇩",
+  ireland: "🇮🇪",
+  israel: "🇮🇱",
+  italy: "🇮🇹",
+  japan: "🇯🇵",
+  mexico: "🇲🇽",
+  netherlands: "🇳🇱",
+  norway: "🇳🇴",
+  peru: "🇵🇪",
+  poland: "🇵🇱",
+  portugal: "🇵🇹",
+  "puerto rico": "🇵🇷",
+  romania: "🇷🇴",
+  "saudi arabia": "🇸🇦",
+  singapore: "🇸🇬",
+  "south africa": "🇿🇦",
+  spain: "🇪🇸",
+  sweden: "🇸🇪",
+  switzerland: "🇨🇭",
+  thailand: "🇹🇭",
+  turkey: "🇹🇷",
+  "united kingdom": "🇬🇧",
+  uk: "🇬🇧",
+  "united states": "🇺🇸",
+  usa: "🇺🇸",
+  "united states of america": "🇺🇸",
+  us: "🇺🇸",
+  vietnam: "🇻🇳",
 };
 
 const getCountryLabel = (countryName: string) => {
   const trimmed = countryName.trim();
-  const flag = COUNTRY_FLAG_OVERRIDES[trimmed] || "🌍";
+  const normalized = trimmed.toLowerCase();
+  const override = COUNTRY_FLAG_OVERRIDES[normalized];
+  if (override) {
+    return `${override} ${trimmed}`;
+  }
+  if (/^[a-z]{2}$/i.test(normalized)) {
+    const chars = normalized.toUpperCase().split("");
+    const flag = String.fromCodePoint(
+      ...chars.map((char) => 127397 + char.charCodeAt(0))
+    );
+    return `${flag} ${trimmed}`;
+  }
+  const flag = "🌍";
   return `${flag} ${trimmed}`;
 };
 
