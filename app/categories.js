@@ -559,9 +559,23 @@ const MAIN_CATEGORY_RULES = [
   {
     label:"Beverage Store"
     keywords: ["beer", "beer bar", "brewery", "breweries", "brewpub","bar","wine_bar","night_club","store"],
-  }
+  },
+  {
     label:"Pizza"
     keywords: ["italian_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","pizza_restaurant"],
+       },
+   {
+    label:"Italian"
+    keywords: ["italian_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","pizza_restaurant"],
+       },
+   {
+    label:"Japanese"
+    keywords: ["japanese_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","sushi_restaurant","sushi"],
+       },
+     {
+    label:"Spanish"
+    keywords: ["spanish_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","pizza_restaurant"],
+       },
 ];
 
 const MAIN_CATEGORY_REGEX_RULES = MAIN_CATEGORY_RULES.map((rule) => ({
