@@ -1,4 +1,5 @@
 "use client";
+
 import type { User } from "firebase/auth";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
@@ -12,7 +13,10 @@ import {
   query,
   serverTimestamp,
   where,
+  Timestamp,
+  type FieldValue,
 } from "firebase/firestore";
+
 import {
   signInWithGoogle,
   signOutUser,
@@ -29,7 +33,10 @@ type ReviewRecord = {
   rating?: number;
   restaurantId?: string;
   text?: string;
-  timestamp?: { toDate?: () => Date } | null;
+
+  // ✅ serverTimestamp() returns FieldValue; reads return Timestamp
+  timestamp?: Timestamp | FieldValue | null;
+
   userDisplayName?: string;
   userEmail?: string;
   userId?: string;
@@ -55,9 +62,14 @@ const toDateValue = (review: ReviewRecord) => {
   if (review.createdAt) {
     return new Date(review.createdAt);
   }
-  if (review.timestamp?.toDate) {
-    return review.timestamp.toDate();
+
+  // ✅ If timestamp is a real Firestore Timestamp, it has toDate()
+  const ts = review.timestamp as Timestamp | undefined;
+  if (ts && typeof (ts as any).toDate === "function") {
+    return ts.toDate();
   }
+
+  // ✅ FieldValue from serverTimestamp() (before server resolves) -> keep stable
   return new Date(0);
 };
 
@@ -71,26 +83,28 @@ const getStarString = (rating: number) => {
 export default function RestaurantInfoPage() {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
+
   const [restaurant, setRestaurant] = useState<RestaurantRecord | null>(null);
   const [reviews, setReviews] = useState<ReviewRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // ✅ typed auth user (removes implicit any issues)
   const [user, setUser] = useState<User | null>(null);
   const [authError, setAuthError] = useState("");
+
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthChanges((nextUser: User | null) => {
+      setUser(nextUser);
+    });
 
-useEffect(() => {
-  const unsubscribe = subscribeToAuthChanges((nextUser: User | null) => {
-    setUser(nextUser);
-  });
-
-  return () => unsubscribe();
-}, []);
-
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!id) {
@@ -98,6 +112,7 @@ useEffect(() => {
       setLoading(false);
       return () => {};
     }
+
     let isMounted = true;
 
     const loadData = async () => {
@@ -126,9 +141,10 @@ useEffect(() => {
           ...docItem.data(),
         }));
 
-        reviewItems.sort((a, b) =>
-          toDateValue(b as ReviewRecord).getTime() -
-          toDateValue(a as ReviewRecord).getTime()
+        reviewItems.sort(
+          (a, b) =>
+            toDateValue(b as ReviewRecord).getTime() -
+            toDateValue(a as ReviewRecord).getTime()
         );
 
         if (isMounted) {
@@ -155,7 +171,7 @@ useEffect(() => {
     setAuthError("");
     try {
       await signInWithGoogle();
-    } catch (signInError) {
+    } catch {
       setAuthError("Unable to sign in with Google.");
     }
   };
@@ -164,14 +180,14 @@ useEffect(() => {
     setAuthError("");
     try {
       await signOutUser();
-    } catch (signOutError) {
+    } catch {
       setAuthError("Unable to sign out right now.");
     }
   };
 
   const restaurantRating = useMemo(() => {
     if (!restaurant) return 0;
-    const directRating = Number(restaurant.rating ?? restaurant.grade ?? 0);
+    const directRating = Number((restaurant as any).rating ?? (restaurant as any).grade ?? 0);
     if (!Number.isNaN(directRating) && directRating > 0) {
       return directRating;
     }
@@ -192,6 +208,7 @@ useEffect(() => {
 
   const handleSubmitReview = async (event: React.FormEvent) => {
     event.preventDefault();
+
     if (!user) {
       setSubmitError("Please sign in to leave a review.");
       return;
@@ -219,7 +236,10 @@ useEffect(() => {
         rating: reviewRating,
         restaurantId: id,
         text: reviewText.trim(),
+
+        // ✅ Firestore will resolve this server-side
         timestamp: serverTimestamp(),
+
         userDisplayName: user.displayName || "Anonymous",
         userEmail: user.email || "",
         userId: user.uid || "",
@@ -227,9 +247,12 @@ useEffect(() => {
       };
 
       const docRef = await addDoc(collection(db, "review"), payload);
+
+      // ✅ For immediate UI ordering, use a local Timestamp
       const newReview: ReviewRecord = {
         id: docRef.id,
         ...payload,
+        timestamp: Timestamp.fromDate(new Date()),
       };
 
       setReviews((prev) => [newReview, ...prev]);
@@ -297,28 +320,26 @@ useEffect(() => {
               background: "#1e293b",
             }}
           >
-            {restaurant.photo ? (
+            {(restaurant as any).photo ? (
               <img
-                src={String(restaurant.photo)}
-                alt={String(restaurant.name || "Restaurant")}
+                src={String((restaurant as any).photo)}
+                alt={String((restaurant as any).name || "Restaurant")}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : (
-              <div
-                aria-hidden="true"
-                style={{ width: "100%", height: "100%" }}
-              />
+              <div aria-hidden="true" style={{ width: "100%", height: "100%" }} />
             )}
           </div>
+
           <div>
             <p style={{ margin: 0, fontSize: "14px", color: "#cbd5f5" }}>
               Restaurant details
             </p>
             <h1 style={{ margin: "6px 0 10px", fontSize: "32px" }}>
-              {String(restaurant.name || "Restaurant")}
+              {String((restaurant as any).name || "Restaurant")}
             </h1>
             <p style={{ margin: 0, color: "#e2e8f0", lineHeight: 1.6 }}>
-              {String(restaurant.description || "No description provided.")}
+              {String((restaurant as any).description || "No description provided.")}
             </p>
             <div style={{ marginTop: "16px", fontSize: "18px" }}>
               <span
@@ -389,6 +410,7 @@ useEffect(() => {
           }}
         >
           <h2 style={{ margin: 0 }}>Reviews</h2>
+
           <div>
             {user ? (
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
@@ -425,10 +447,9 @@ useEffect(() => {
                 Sign in to review
               </button>
             )}
+
             {authError && (
-              <p style={{ marginTop: "8px", color: "#b91c1c" }}>
-                {authError}
-              </p>
+              <p style={{ marginTop: "8px", color: "#b91c1c" }}>{authError}</p>
             )}
           </div>
         </div>
@@ -466,6 +487,7 @@ useEffect(() => {
                       />
                     ) : null}
                   </div>
+
                   <div>
                     <div
                       style={{
@@ -475,9 +497,7 @@ useEffect(() => {
                         flexWrap: "wrap",
                       }}
                     >
-                      <strong>
-                        {review.userDisplayName || "Anonymous reviewer"}
-                      </strong>
+                      <strong>{review.userDisplayName || "Anonymous reviewer"}</strong>
                       <span style={{ color: "#f59e0b" }}>
                         {getStarString(Number(review.rating ?? review.grade ?? 0))}
                       </span>
@@ -500,11 +520,13 @@ useEffect(() => {
           }}
         >
           <h3 style={{ marginTop: 0 }}>Leave a review</h3>
+
           {!user && (
             <p style={{ color: "#64748b" }}>
               Sign in to share your experience with this restaurant.
             </p>
           )}
+
           <form onSubmit={handleSubmitReview}>
             <label
               style={{ display: "block", marginBottom: "6px", fontWeight: 600 }}
@@ -512,12 +534,11 @@ useEffect(() => {
             >
               Your rating
             </label>
+
             <select
               id="review-rating"
               value={reviewRating}
-              onChange={(event) =>
-                setReviewRating(Number(event.target.value))
-              }
+              onChange={(event) => setReviewRating(Number(event.target.value))}
               style={{
                 padding: "8px",
                 borderRadius: "8px",
@@ -539,6 +560,7 @@ useEffect(() => {
             >
               Commentary
             </label>
+
             <textarea
               id="review-text"
               value={reviewText}
@@ -554,9 +576,7 @@ useEffect(() => {
             />
 
             {submitError && (
-              <p style={{ color: "#b91c1c", marginTop: "12px" }}>
-                {submitError}
-              </p>
+              <p style={{ color: "#b91c1c", marginTop: "12px" }}>{submitError}</p>
             )}
 
             <button
