@@ -538,24 +538,30 @@ const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const MAIN_CATEGORY_RULES = [
   {
     label: "Burgers",
-    keywords: ["burger", "burgers", "hamburger", "cheeseburger"],
+    keywords: ["burger", "burgers", "hamburger", "cheeseburger","barbecue_restaurant","hamburger_restaurant","fast_food_restaurant"],
   },
   {
     label: "American (New)",
-    keywords: ["american (new)", "new american", "modern american"],
+    keywords: ["american (new)", "new american", "modern american","barbecue_restaurant","american_restaurant","fast_food_restaurant"],
   },
   {
     label: "American (Traditional)",
-    keywords: ["american (traditional)", "traditional american", "classic american"],
+    keywords: ["american (traditional)", "traditional american", "classic american","barbecue_restaurant","american_restaurant","fast_food_restaurant"],
   },
   {
     label: "Beer",
-    keywords: ["beer", "beer bar", "brewery", "breweries", "brewpub"],
+    keywords: ["beer", "beer bar", "brewery", "breweries", "brewpub","bar","wine_bar"],
   },
   {
     label: "Barbeque",
-    keywords: ["barbeque", "barbecue", "bbq", "smokehouse"],
+    keywords: ["barbeque", "barbecue", "bbq", "smokehouse","barbecue_restaurant","bar_and_grill"],
   },
+  {
+    label:"Beverage Store"
+    keywords: ["beer", "beer bar", "brewery", "breweries", "brewpub","bar","wine_bar","night_club","store"],
+  }
+    label:"Pizza"
+    keywords: ["italian_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","pizza_restaurant"],
 ];
 
 const MAIN_CATEGORY_REGEX_RULES = MAIN_CATEGORY_RULES.map((rule) => ({
