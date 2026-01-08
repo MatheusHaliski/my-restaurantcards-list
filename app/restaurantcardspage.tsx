@@ -19,6 +19,7 @@ type Restaurant = {
   description?: string;
   rating?: number;
   grade?: number;
+  starsgiven?: number;
 
   country?: string;
   state?: string;
@@ -440,7 +441,8 @@ export default function RestaurantCardsPage() {
           }}
         >
           {filteredRestaurants.map((restaurant) => {
-            const ratingValue = restaurant.rating ?? restaurant.grade ?? 0;
+            const ratingValue =
+              restaurant.starsgiven ?? restaurant.rating ?? restaurant.grade ?? 0;
             const { rounded, display } = getStarRating(ratingValue);
 
             return (
