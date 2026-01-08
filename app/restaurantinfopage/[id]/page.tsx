@@ -245,6 +245,61 @@ export default function RestaurantInfoPage() {
     return Object.entries(restaurant);
   }, [restaurant]);
 
+  const hiddenDetailKeys = useMemo(
+    () =>
+      new Set([
+        "id",
+        "stars",
+        "review_count",
+        "fallbackapplied",
+        "photo",
+        "fallbacktype",
+      ]),
+    []
+  );
+
+  const categoryKeys = useMemo(
+    () => new Set(["categories", "category", "cuisine", "cuisines"]),
+    []
+  );
+
+  const categoryEntry = useMemo(
+    () =>
+      restaurantDetails.find(([key]) =>
+        categoryKeys.has(String(key).toLowerCase())
+      ),
+    [restaurantDetails, categoryKeys]
+  );
+
+  const categoryList = useMemo(() => {
+    if (!categoryEntry) return [] as string[];
+    const [, value] = categoryEntry;
+    if (Array.isArray(value)) {
+      return value.map((item) => String(item)).filter(Boolean);
+    }
+    if (typeof value === "string") {
+      return value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+    if (value) {
+      return [String(value)];
+    }
+    return [];
+  }, [categoryEntry]);
+
+  const visibleDetails = useMemo(
+    () =>
+      restaurantDetails.filter(([key]) => {
+        const normalized = String(key).toLowerCase();
+        return (
+          !hiddenDetailKeys.has(normalized) && !categoryKeys.has(normalized)
+        );
+      }),
+    [restaurantDetails, hiddenDetailKeys, categoryKeys]
+  );
+
   const handleSubmitReview = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -408,26 +463,94 @@ export default function RestaurantInfoPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "12px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: "16px",
           }}
         >
-          {restaurantDetails.map(([key, value]) => (
-            <div
-              key={key}
+          <div
+            style={{
+              background: "linear-gradient(135deg, #e0f2fe, #eff6ff)",
+              borderRadius: "12px",
+              padding: "16px",
+              border: "1px solid #bfdbfe",
+            }}
+          >
+            <p
               style={{
-                background: "#f8fafc",
-                borderRadius: "10px",
-                padding: "12px",
-                border: "1px solid #e2e8f0",
+                margin: 0,
+                fontSize: "12px",
+                color: "#1e3a8a",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
               }}
             >
-              <div style={{ fontSize: "12px", color: "#475569" }}>{key}</div>
-              <div style={{ fontWeight: 600, marginTop: "4px" }}>
-                {formatValue(value)}
+              Categories
+            </p>
+            <h3 style={{ margin: "6px 0 12px", color: "#0f172a" }}>
+              Popular offerings
+            </h3>
+            {categoryList.length ? (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                {categoryList.map((category) => (
+                  <span
+                    key={category}
+                    style={{
+                      background: "#1d4ed8",
+                      color: "#fff",
+                      padding: "6px 12px",
+                      borderRadius: "999px",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {category}
+                  </span>
+                ))}
               </div>
+            ) : (
+              <p style={{ margin: 0, color: "#475569" }}>
+                No categories listed yet.
+              </p>
+            )}
+          </div>
+
+          <div
+            style={{
+              background: "#f8fafc",
+              borderRadius: "12px",
+              padding: "16px",
+              border: "1px solid #e2e8f0",
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                fontSize: "12px",
+                color: "#475569",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              Quick details
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                gap: "12px",
+                marginTop: "12px",
+              }}
+            >
+              {visibleDetails.map(([key, value]) => (
+                <div key={key}>
+                  <div style={{ fontSize: "12px", color: "#475569" }}>{key}</div>
+                  <div style={{ fontWeight: 600, marginTop: "4px" }}>
+                    {formatValue(value)}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
