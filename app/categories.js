@@ -533,6 +533,48 @@ const CATEGORY_SUFFIXES = new Set([
   "pubs",
 ]);
 
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const MAIN_CATEGORY_RULES = [
+  {
+    label: "Burgers",
+    keywords: ["burger", "burgers", "hamburger", "cheeseburger"],
+  },
+  {
+    label: "American (New)",
+    keywords: ["american (new)", "new american", "modern american"],
+  },
+  {
+    label: "American (Traditional)",
+    keywords: ["american (traditional)", "traditional american", "classic american"],
+  },
+  {
+    label: "Beer",
+    keywords: ["beer", "beer bar", "brewery", "breweries", "brewpub"],
+  },
+  {
+    label: "Barbeque",
+    keywords: ["barbeque", "barbecue", "bbq", "smokehouse"],
+  },
+];
+
+const MAIN_CATEGORY_REGEX_RULES = MAIN_CATEGORY_RULES.map((rule) => ({
+  label: rule.label,
+  patterns: rule.keywords.map(
+    (keyword) => new RegExp(`\\b${escapeRegExp(keyword)}\\b`, "i")
+  ),
+}));
+
+const normalizeCategoryByKeyword = (value) => {
+  const normalized = String(value).toLowerCase();
+  for (const rule of MAIN_CATEGORY_REGEX_RULES) {
+    if (rule.patterns.some((pattern) => pattern.test(normalized))) {
+      return rule.label;
+    }
+  }
+  return value;
+};
+
 const formatCategoryToken = (token) => {
   if (!token) return "";
   const trimmed = token.trim();
@@ -544,7 +586,7 @@ const formatCategoryToken = (token) => {
 export const normalizeCategoryLabel = (category = "") => {
   const raw = String(category).trim();
   if (!raw) return "";
-  if (!raw.includes("_")) return raw;
+  if (!raw.includes("_")) return normalizeCategoryByKeyword(raw);
   const tokens = raw
     .split("_")
     .map((item) => item.trim())
@@ -555,7 +597,8 @@ export const normalizeCategoryLabel = (category = "") => {
     tokens.pop();
   }
   if (!tokens.length) return raw;
-  return tokens.map(formatCategoryToken).join(" ");
+  const formatted = tokens.map(formatCategoryToken).join(" ");
+  return normalizeCategoryByKeyword(formatted);
 };
 
 export const getCategoryIcon = (category = "") => {
