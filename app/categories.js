@@ -538,19 +538,31 @@ const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const MAIN_CATEGORY_RULES = [
   {
     label: "Burgers",
-    keywords: ["burger", "burgers", "hamburger", "cheeseburger","barbecue_restaurant","hamburger_restaurant","fast_food_restaurant"],
+    keywords: ["burger", "burgers", "hamburger", "cheeseburger","barbecue_restaurant","hamburger_restaurant","fast_food_restaurant","Chicken Shop","Chicken Wings"],
+  },
+   {
+    label: "Ice Cream & Frozen Yogurt",
+    keywords: ["burger", "burgers", "hamburger", "cheeseburger","Ice Cream & Frozen Yogurt","Gelat","fast_food_restaurant","Donuts","Breakfast & Brunch"],
+  },
+   {
+    label: "Donuts",
+    keywords: ["Donuts","Desserts","Chocolatiers & Shops","Breakfast & Brunch"],
+  },
+  {
+    label: "Breakfast & Brunch",
+    keywords: ["Donuts","Desserts","Chocolatiers & Shops","Breakfast & Brunch","Waffles","Bubble Tea", "tea", "Coffee & Tea", "Coffee Roasteries"],
   },
   {
     label: "Cafe",
-    keywords: ["coffe & tea", "tea", "coffe", "cafes","cafeteria","Point Of Interest","fast_food_restaurant","Fast Food","Candy Store"],
+    keywords: ["Bubble Tea", "tea", "Coffee & Tea", "Coffee Roasteries","Colombian","Breakfast & Brunch", "Hong Kong Style Cafe","cafes","cafeteria","Point Of Interest","fast_food_restaurant","Fast Food","Candy Store"],
   },
   {
     label: "American (New)",
-    keywords: ["american (new)", "new american", "modern american","barbecue_restaurant","american_restaurant","fast_food_restaurant"],
+    keywords: ["american (new)", "new american", "modern american","barbecue_restaurant","american_restaurant","fast_food_restaurant","Chicken Shop","Chicken Wings"],
   },
   {
     label: "American (Traditional)",
-    keywords: ["american (traditional)", "traditional american", "classic american","barbecue_restaurant","american_restaurant","fast_food_restaurant"],
+    keywords: ["american (traditional)", "traditional american", "Breakfast & Brunch", "classic american","barbecue_restaurant","american_restaurant","fast_food_restaurant","Chicken Shop","Chicken Wings"],
   },
   {
     label: "Beer",
@@ -558,7 +570,11 @@ const MAIN_CATEGORY_RULES = [
   },
   {
     label: "Barbeque",
-    keywords: ["barbeque", "barbecue", "bbq", "smokehouse","barbecue_restaurant","bar_and_grill"],
+    keywords: ["barbeque", "barbecue", "bbq", "smokehouse","barbecue_restaurant","bar_and_grill","Chicken Shop","Chicken Wings","Hot Dogs"],
+  },
+   {
+    label: "Hot Dogs",
+    keywords: ["barbeque", "barbecue", "bbq", "smokehouse","barbecue_restaurant","bar_and_grill","Chicken Shop","Chicken Wings","Hot Dogs"],
   },
   {
     label:"Beverage Store"
@@ -570,7 +586,7 @@ const MAIN_CATEGORY_RULES = [
        },
    {
     label:"Italian"
-    keywords: ["italian_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","pizza_restaurant"],
+    keywords: ["italian_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","pizza_restaurant","Chicken Shop","Chicken Wings"],
        },
    {
     label:"Japanese"
@@ -578,7 +594,7 @@ const MAIN_CATEGORY_RULES = [
        },
      {
     label:"Spanish"
-    keywords: ["spanish_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","pizza_restaurant","Point Of Interest"],
+    keywords: ["spanish_restaurant", "restaurant", "food", "breweries", "brewpub","bar","wine_bar","night_club","store","pizza_restaurant","Point Of Interest","Chicken Shop","Chicken Wings"],
        },
 ];
 
