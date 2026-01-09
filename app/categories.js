@@ -618,7 +618,7 @@ const MAIN_CATEGORY_RULES = [
   },
   {
     label: "Italian",
-    keywords: ["food"],
+    keywords: ["food","italian"],
   },
   {
     label: "Japanese",
