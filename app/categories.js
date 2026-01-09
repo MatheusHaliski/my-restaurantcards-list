@@ -461,7 +461,7 @@ const CATEGORY_ICON_RULES = [
   { keywords: ["indonesia", "indonesian"], icon: "🇮🇩" },
   { keywords: ["malaysia", "malaysian"], icon: "🇲🇾" },
   { keywords: ["singapore", "singaporean"], icon: "🇸🇬" },
-  { keywords: ["italy", "italian"], icon: "🇮🇹" },
+  { keywords: ["italy", "italian","pizza"], icon: "🇮🇹" },
   { keywords: ["france", "french"], icon: "🇫🇷" },
   { keywords: ["greece", "greek"], icon: "🇬🇷" },
   { keywords: ["spain", "spanish"], icon: "🇪🇸" },
