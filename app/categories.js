@@ -598,7 +598,7 @@ const MAIN_CATEGORY_RULES = [
   },
   {
     label: "Beer",
-    keywords: ["beer", "beer bar", "brewery", "breweries", "brewpub", "gastropubs"],
+    keywords: ["beer", "beer bar", "brewery", "breweries", "brewpub","bar","restaurant","gastropubs"],
   },
   {
     label: "Bar",
@@ -610,7 +610,7 @@ const MAIN_CATEGORY_RULES = [
   },
   {
     label: "Hot Dogs",
-    keywords: ["hot dog", "hot dogs","restaurant"],
+    keywords: ["hot dog", "hot dogs","restaurant","fast food","burgers","pizza"],
   },
   {
     label: "Pizza",
