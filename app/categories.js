@@ -468,7 +468,7 @@ const CATEGORY_ICON_RULES = [
   { keywords: ["mexico", "mexican"], icon: "🇲🇽" },
   { keywords: ["canada", "canadian"], icon: "🇨🇦" },
   { keywords: ["america", "american", "usa", "u.s."], icon: "🇺🇸" },
-  { keywords: ["brazil", "brazilian","Point Of Interest","American (New)"], icon: "🇧🇷" },
+  { keywords: ["brazil", "brazilian","point of interest","american (new)","buffet","establishment"], icon: "🇧🇷" },
   { keywords: ["argentina", "argentinian"], icon: "🇦🇷" },
   { keywords: ["peru", "peruvian"], icon: "🇵🇪" },
   { keywords: ["colombia", "colombian"], icon: "🇨🇴" },
@@ -569,6 +569,11 @@ const MAIN_CATEGORY_RULES = [
   {
     label: "Bakeries",
     keywords: ["bakery", "bakeries", "patisserie", "cake shop", "cupcake", "custom cakes"],
+  },
+   {
+    label: "Brazilian",
+    keywords: ["brazil", "brazilian","point of interest","american (new)","buffet","establishment","bbq", "barbecue",
+               "barbeque", "smokehouse", "barbecue_restaurant", "bar_and_grill"],
   },
   {
     label: "Breakfast & Brunch",
