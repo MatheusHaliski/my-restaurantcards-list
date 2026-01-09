@@ -468,7 +468,7 @@ const CATEGORY_ICON_RULES = [
   { keywords: ["mexico", "mexican"], icon: "🇲🇽" },
   { keywords: ["canada", "canadian"], icon: "🇨🇦" },
   { keywords: ["america", "american", "usa", "u.s."], icon: "🇺🇸" },
-  { keywords: ["brazil", "brazilian"], icon: "🇧🇷" },
+  { keywords: ["brazil", "brazilian","Point Of Interest","American (New)"], icon: "🇧🇷" },
   { keywords: ["argentina", "argentinian"], icon: "🇦🇷" },
   { keywords: ["peru", "peruvian"], icon: "🇵🇪" },
   { keywords: ["colombia", "colombian"], icon: "🇨🇴" },
