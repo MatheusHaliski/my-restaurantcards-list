@@ -594,7 +594,7 @@ const MAIN_CATEGORY_RULES = [
   },
   {
     label: "American (Traditional)",
-    keywords: ["american (traditional)", "traditional american", "classic american","burgers","restaurant"],
+    keywords: ["american (new)", "new american", "modern american", "american_restaurant","burgers","restaurant"],
   },
   {
     label: "Beer",
