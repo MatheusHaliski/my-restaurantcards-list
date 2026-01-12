@@ -619,7 +619,7 @@ const MAIN_CATEGORY_RULES = [
   },
   {
     label: "Pizza",
-    keywords: ["pizza", "pizza_restaurant","italian"],
+    keywords: ["pizza", "pizza_restaurant"],
   },
   {
     label: "Italian",
