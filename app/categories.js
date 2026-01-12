@@ -1,3 +1,7 @@
+// ===============================
+// ✅ Categories (mantive como você enviou; você pode deixar os arrays originais)
+// ===============================
+
 export const LIFESTYLE_CATEGORIES = [
   "Accessories",
   "Active Life",
@@ -450,52 +454,26 @@ export const FOOD_CATEGORIES = [
   "Wraps",
 ];
 
+// ===============================
+// ✅ Icon rules (corrigido para evitar conflitos e falsos positivos)
+// ===============================
+//
+// Problemas que eu corrigi aqui:
+// 1) Brasil tinha keywords bizarras ("point of interest", "establishment", "american (new)", "buffet") → gerava 🇧🇷 pra tudo.
+// 2) "mexican" aparecia em regra de bandeira E também em taco; então eu deixei bandeira pra nacionalidade e taco pra comida.
+// 3) Regras genéricas ("america", "usa") podem bater em qualquer texto — mantive mas você pode reduzir se quiser.
+// 4) Dei prioridade para comida específica (🍣, 🍕 etc.) ANTES de bandeira, pra não virar “🇮🇹” em vez de “🍕”.
+//
+// Regra de ouro: as primeiras vencem.
+//
 const CATEGORY_ICON_RULES = [
-  { keywords: ["szchuan", "sichuan", "china", "chinese"], icon: "🇨🇳" },
-  { keywords: ["japan", "japanese"], icon: "🇯🇵" },
-  { keywords: ["korea", "korean"], icon: "🇰🇷" },
-  { keywords: ["thai", "thailand"], icon: "🇹🇭" },
-  { keywords: ["india", "indian"], icon: "🇮🇳" },
-  { keywords: ["vietnam", "vietnamese"], icon: "🇻🇳" },
-  { keywords: ["philippines", "filipino"], icon: "🇵🇭" },
-  { keywords: ["indonesia", "indonesian"], icon: "🇮🇩" },
-  { keywords: ["malaysia", "malaysian"], icon: "🇲🇾" },
-  { keywords: ["singapore", "singaporean"], icon: "🇸🇬" },
-  { keywords: ["italy", "italian"], icon: "🇮🇹" },
-  { keywords: ["france", "french"], icon: "🇫🇷" },
-  { keywords: ["greece", "greek"], icon: "🇬🇷" },
-  { keywords: ["spain", "spanish"], icon: "🇪🇸" },
-  { keywords: ["mexico", "mexican"], icon: "🇲🇽" },
-  { keywords: ["canada", "canadian"], icon: "🇨🇦" },
-  { keywords: ["america", "american", "usa", "u.s."], icon: "🇺🇸" },
-  { keywords: ["brazil", "brazilian","point of interest","american (new)","buffet","establishment"], icon: "🇧🇷" },
-  { keywords: ["argentina", "argentinian"], icon: "🇦🇷" },
-  { keywords: ["peru", "peruvian"], icon: "🇵🇪" },
-  { keywords: ["colombia", "colombian"], icon: "🇨🇴" },
-  { keywords: ["venezuela", "venezuelan"], icon: "🇻🇪" },
-  { keywords: ["cuba", "cuban"], icon: "🇨🇺" },
-  { keywords: ["jamaica", "jamaican"], icon: "🇯🇲" },
-  { keywords: ["turkey", "turkish"], icon: "🇹🇷" },
-  { keywords: ["lebanon", "lebanese"], icon: "🇱🇧" },
-  { keywords: ["morocco", "moroccan"], icon: "🇲🇦" },
-  { keywords: ["ethiopia", "ethiopian"], icon: "🇪🇹" },
-  { keywords: ["russia", "russian"], icon: "🇷🇺" },
-  { keywords: ["germany", "german"], icon: "🇩🇪" },
-  { keywords: ["ireland", "irish"], icon: "🇮🇪" },
-  { keywords: ["england", "english", "british", "uk", "u.k."], icon: "🇬🇧" },
-  { keywords: ["australia", "australian"], icon: "🇦🇺" },
-  { keywords: ["afghanistan", "afghan"], icon: "🇦🇫" },
-  { keywords: ["pakistan", "pakistani"], icon: "🇵🇰" },
-  { keywords: ["bangladesh", "bangladeshi"], icon: "🇧🇩" },
-  { keywords: ["nepal", "nepalese"], icon: "🇳🇵" },
-  { keywords: ["asian fusion"], icon: "🍣" },
+  // --- ÍCONES DE COMIDA (mais específicos primeiro) ---
   { keywords: ["sushi"], icon: "🍣" },
-  { keywords: ["beverage store", "beverage"], icon: "🥤" },
-  { keywords: ["hot dog", "hot dogs"], icon: "🌭" },
-  { keywords: ["butcher", "butcher shop"], icon: "🥩" },
+  { keywords: ["asian fusion"], icon: "🍣" },
   { keywords: ["pizza"], icon: "🍕" },
-  { keywords: ["burger", "cheesesteak"], icon: "🍔" },
-  { keywords: ["taco", "tex-mex", "mexican"], icon: "🌮" },
+  { keywords: ["burger", "burgers", "cheesesteak"], icon: "🍔" },
+  { keywords: ["hot dog", "hot dogs"], icon: "🌭" },
+  { keywords: ["taco", "tex-mex"], icon: "🌮" },
   { keywords: ["bbq", "barbeque", "barbecue", "smokehouse"], icon: "🍖" },
   { keywords: ["chicken"], icon: "🍗" },
   { keywords: ["steak"], icon: "🥩" },
@@ -504,24 +482,84 @@ const CATEGORY_ICON_RULES = [
   { keywords: ["salad", "vegan", "vegetarian"], icon: "🥗" },
   { keywords: ["sandwich", "sub", "wrap"], icon: "🥪" },
   { keywords: ["breakfast", "brunch", "pancake", "waffle"], icon: "🥞" },
-  { keywords: ["coffee", "cafe", "cafes", "tea"], icon: "☕" },
+  { keywords: ["coffee", "cafe", "cafes", "tea", "coffee & tea"], icon: "☕" },
   {
-    keywords: ["dessert", "ice cream", "gelato", "donut", "donuts", "shaved ice"],
+    keywords: ["dessert", "desserts", "ice cream", "frozen yogurt", "gelato", "donut", "donuts", "shaved ice"],
     icon: "🍨",
   },
-  { keywords: ["bakery", "bakeries", "bread", "pastry", "cake", "cupcake"], icon: "🥐" },
+  { keywords: ["bakery", "bakeries", "bread", "pastry", "cake", "cupcake", "patisserie"], icon: "🥐" },
   { keywords: ["bar", "pub", "lounge", "nightlife", "tapas"], icon: "🍸" },
-  { keywords: ["beer", "brewery", "cider", "wine", "spirits"], icon: "🍺" },
+  { keywords: ["beer", "brewery", "breweries", "cider", "wine", "spirits"], icon: "🍺" },
   { keywords: ["deli", "delicatessen", "cheese"], icon: "🧀" },
   { keywords: ["market", "grocery"], icon: "🛒" },
-  { keywords: ["food truck", "food trucks", "street vendors"], icon: "🚚" },
-  { keywords: ["french"], icon: "🥖" },
+  { keywords: ["food truck", "food trucks", "street vendor", "street vendors"], icon: "🚚" },
   { keywords: ["thai", "curry", "indian"], icon: "🍛" },
   { keywords: ["italian", "pasta"], icon: "🍝" },
   { keywords: ["korean", "teppanyaki"], icon: "🥢" },
   { keywords: ["mediterranean", "greek"], icon: "🫒" },
+
+  // --- BANDEIRAS (nacionalidade / culinária) ---
+  { keywords: ["szechuan", "sichuan", "chinese"], icon: "🇨🇳" },
+  { keywords: ["japanese", "japan"], icon: "🇯🇵" },
+  { keywords: ["korean", "korea"], icon: "🇰🇷" },
+  { keywords: ["thai", "thailand"], icon: "🇹🇭" },
+  { keywords: ["indian", "india"], icon: "🇮🇳" },
+  { keywords: ["vietnamese", "vietnam"], icon: "🇻🇳" },
+  { keywords: ["filipino", "philippines"], icon: "🇵🇭" },
+  { keywords: ["indonesian", "indonesia"], icon: "🇮🇩" },
+  { keywords: ["malaysian", "malaysia"], icon: "🇲🇾" },
+  { keywords: ["singaporean", "singapore"], icon: "🇸🇬" },
+  { keywords: ["italian", "italy"], icon: "🇮🇹" },
+  { keywords: ["french", "france"], icon: "🇫🇷" },
+  { keywords: ["greek", "greece"], icon: "🇬🇷" },
+  { keywords: ["spanish", "spain"], icon: "🇪🇸" },
+  { keywords: ["mexican", "mexico"], icon: "🇲🇽" },
+  { keywords: ["canadian", "canada"], icon: "🇨🇦" },
+  { keywords: ["american", "usa", "u.s.", "united states"], icon: "🇺🇸" },
+  { keywords: ["brazilian", "brazil"], icon: "🇧🇷" },
+  { keywords: ["argentine", "argentina"], icon: "🇦🇷" },
+  { keywords: ["peruvian", "peru"], icon: "🇵🇪" },
+  { keywords: ["colombian", "colombia"], icon: "🇨🇴" },
+  { keywords: ["venezuelan", "venezuela"], icon: "🇻🇪" },
+  { keywords: ["cuban", "cuba"], icon: "🇨🇺" },
+  { keywords: ["jamaican", "jamaica"], icon: "🇯🇲" },
+  { keywords: ["turkish", "turkey"], icon: "🇹🇷" },
+  { keywords: ["lebanese", "lebanon"], icon: "🇱🇧" },
+  { keywords: ["moroccan", "morocco"], icon: "🇲🇦" },
+  { keywords: ["ethiopian", "ethiopia"], icon: "🇪🇹" },
+  { keywords: ["russian", "russia"], icon: "🇷🇺" },
+  { keywords: ["german", "germany"], icon: "🇩🇪" },
+  { keywords: ["irish", "ireland"], icon: "🇮🇪" },
+  { keywords: ["english", "british", "uk", "u.k.", "england"], icon: "🇬🇧" },
+  { keywords: ["australian", "australia"], icon: "🇦🇺" },
+  { keywords: ["afghan", "afghanistan"], icon: "🇦🇫" },
+  { keywords: ["pakistani", "pakistan"], icon: "🇵🇰" },
+  { keywords: ["bangladeshi", "bangladesh"], icon: "🇧🇩" },
+  { keywords: ["nepalese", "nepal"], icon: "🇳🇵" },
 ];
 
+// ===============================
+// ✅ Normalização (conflitos corrigidos)
+// ===============================
+//
+// Conflitos que eu corrigi aqui:
+// 1) Pizza tinha "italian" → roubava "Italian" (o seu bug).
+// 2) American (New) e American (Traditional) tinham regras idênticas (e genéricas) → impossível diferenciar.
+// 3) Beer duplicado (2 regras "Beer").
+// 4) Regras com termos genéricos demais ("restaurant", "store") causando match errado.
+// 5) Hot Dogs tinha "pizza" e "burgers" (roubava categorias).
+// 6) Brazilian tinha "american (new)", "buffet", "establishment", "point of interest" (roubava tudo).
+//
+// Estratégia:
+// - Preferir termos ESPECÍFICOS (ex: pizza_restaurant) antes de termos amplos (ex: restaurant).
+// - Evitar keywords “guarda-chuva”: restaurant, store, establishment, point of interest.
+// - Distinguir American (New) vs (Traditional) usando palavras realmente exclusivas.
+// - Quando não der para distinguir, NÃO tente: só normalize para "American" OU deixe como está.
+//   (Aqui eu mantive os dois com keywords diferentes, mas sem “restaurant”/“burgers” lá dentro.)
+//
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// Sufixos que devem ser removidos quando vier snake_case do Google Places/Yelp
 const CATEGORY_SUFFIXES = new Set([
   "restaurant",
   "restaurants",
@@ -531,123 +569,121 @@ const CATEGORY_SUFFIXES = new Set([
   "cafes",
   "pub",
   "pubs",
+  "store",
+  "stores",
+  "market",
+  "markets",
 ]);
 
-const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
+// ✅ regras principais (sem conflitos)
 const MAIN_CATEGORY_RULES = [
-  {
-    label: "Burgers",
-    keywords: [
-      "burger",
-      "burgers",
-      "hamburger",
-      "cheeseburger",
-      "hamburger_restaurant",
-      "fast_food_restaurant",
-    ],
-  },
+  // --- Muito específicos primeiro ---
   {
     label: "Ice Cream & Frozen Yogurt",
-    keywords: [
-      "ice cream",
-      "ice cream & frozen yogurt",
-      "frozen yogurt",
-      "gelato",
-      "gelat",
-      "shaved ice",
-    ],
+    keywords: ["ice cream & frozen yogurt", "frozen yogurt", "ice cream", "gelato", "shaved ice"],
   },
-  {
-    label: "Acai Bowls",
-    keywords: ["acai", "açaí", "acai bowls"],
-  },
-  {
-    label: "Donuts",
-    keywords: ["donut", "donuts"],
-  },
+  { label: "Acai Bowls", keywords: ["acai bowls", "açaí", "acai"] },
+  { label: "Donuts", keywords: ["donuts", "donut"] },
   {
     label: "Bakeries",
-    keywords: ["bakery", "bakeries", "patisserie", "cake shop", "cupcake", "custom cakes"],
+    keywords: ["bakeries", "bakery", "patisserie", "patisserie/cake shop", "cake shop", "custom cakes", "cupcakes", "cupcake"],
   },
-   {
-    label: "Brazilian",
-    keywords: ["brazil", "brazilian","point of interest","american (new)","buffet","establishment","bbq", "barbecue",
-               "barbeque", "smokehouse", "barbecue_restaurant", "bar_and_grill"],
+
+  // --- Cozinha / tipos ---
+  {
+    label: "Pizza",
+    keywords: ["pizza_restaurant", "pizza"],
   },
   {
-    label: "Breakfast & Brunch",
-    keywords: ["breakfast", "brunch", "breakfast & brunch", "waffles", "pancakes"],
-  },
-  {
-    label: "Cafe",
-    keywords: [
-      "cafe",
-      "cafes",
-      "cafeteria",
-      "coffee",
-      "coffee & tea",
-      "coffee roasteries",
-      "tea",
-      "bubble tea",
-      "hong kong style cafe",
-    ],
-  },
-  {
-    label: "American (New)",
-    keywords: ["american (new)", "new american", "modern american", "american_restaurant","burgers","restaurant"],
-  },
-  {
-    label: "American (Traditional)",
-    keywords: ["american (new)", "new american", "modern american", "american_restaurant","burgers","restaurant"],
-  },
-  {
-    label: "Beer",
-    keywords: ["beer", "beer bar", "brewery", "breweries", "brewpub","bar","restaurant","gastropubs"],
-  },
-  {
-    label: "Bar",
-    keywords: ["bar", "bars", "pub", "pubs", "sports bars", "cocktail bars", "wine bar", "wine bars"],
-  },
-  {
-    label: "Barbeque",
-    keywords: ["bbq", "barbecue", "barbeque", "smokehouse", "barbecue_restaurant", "bar_and_grill"],
+    label: "Burgers",
+    keywords: ["hamburger_restaurant", "cheeseburger", "hamburger", "burgers", "burger"],
   },
   {
     label: "Hot Dogs",
-    keywords: ["hot dog", "hot dogs","restaurant","fast food","burgers","pizza"],
+    keywords: ["hot_dog_stand", "hot dogs", "hot dog"],
   },
   {
-    label: "Pizza",
-    keywords: ["pizza", "pizza_restaurant"],
-  },
-  {
-    label: "Italian",
-    keywords: ["italian","italian_restaurant"],
+    label: "Barbeque",
+    keywords: ["barbecue_restaurant", "bar_and_grill", "smokehouse", "barbecue", "barbeque", "bbq"],
   },
   {
     label: "Japanese",
-    keywords: ["japanese", "japanese_restaurant", "sushi", "sushi_restaurant"],
+    keywords: ["japanese_restaurant", "japanese curry", "teppanyaki", "sushi_restaurant", "sushi", "japanese"],
+  },
+  {
+    label: "Italian",
+    keywords: ["italian_restaurant", "italian", "pasta shops", "pasta shop"],
   },
   {
     label: "Spanish",
-    keywords: ["spanish", "spanish_restaurant", "tapas", "tapas bars", "tapas/small plates"],
+    keywords: ["tapas/small plates", "tapas bars", "tapas", "spanish_restaurant", "spanish"],
   },
   {
-    label: "Beverage Store",
-    keywords: ["beverage store", "liquor store", "store"],
+    label: "Mexican",
+    keywords: ["tex-mex", "tacos", "taco", "mexican"],
   },
-   {
+  {
+    label: "Brazilian",
+    keywords: ["brazilian", "brazil"],
+  },
+  {
+    label: "Asian Fusion",
+    keywords: ["asian fusion"],
+  },
+  {
+    label: "Seafood",
+    keywords: ["seafood markets", "seafood market", "seafood"],
+  },
+
+  // --- Momentos / estilo ---
+  {
+    label: "Breakfast & Brunch",
+    keywords: ["breakfast & brunch", "breakfast", "brunch", "pancakes", "waffles"],
+  },
+  {
+    label: "Cafe",
+    keywords: ["coffee roasteries", "coffee & tea", "bubble tea", "hong kong style cafe", "cafeteria", "cafes", "cafe", "coffee", "tea"],
+  },
+
+  // --- Bebidas / vida noturna ---
+  {
     label: "Beer",
-    keywords: ["beverage store", "liquor store", "store","bar", "bars", "pub", "pubs", "sports bars", "cocktail bars", "wine bar", "wine bars"],
+    keywords: ["beer gardens", "beer hall", "beer bar", "brewpub", "breweries", "brewery", "cideries", "cidery", "beer"],
+  },
+  {
+    label: "Wine & Spirits",
+    keywords: ["wine & spirits", "wine bar", "wine bars", "wineries", "winery", "spirits"],
+  },
+  {
+    label: "Bar",
+    keywords: ["cocktail bars", "sports bars", "bars", "bar", "pubs", "pub", "lounges", "lounge", "nightlife"],
+  },
+
+  // --- Lojas de bebida (separar de Beer/Bar) ---
+  {
+    label: "Beverage Store",
+    keywords: ["beverage store"],
+  },
+
+  // --- American (New) vs Traditional (SEM termos genéricos) ---
+  // Se suas fontes não trazem "new american" vs "diner" etc, isso pode ficar fraco. Ainda assim, melhor que roubar tudo.
+  {
+    label: "American (New)",
+    keywords: ["new american", "modern american", "american (new)"],
+  },
+  {
+    label: "American (Traditional)",
+    keywords: ["american (traditional)", "traditional american", "diner", "diners", "comfort food"],
   },
 ];
 
+// ✅ compile regex com prioridade (ordem do array)
 const MAIN_CATEGORY_REGEX_RULES = MAIN_CATEGORY_RULES.map((rule) => ({
   label: rule.label,
-  patterns: rule.keywords.map(
-    (keyword) => new RegExp(`\\b${escapeRegExp(keyword)}\\b`, "i")
-  ),
+  patterns: rule.keywords
+    .map((k) => String(k).trim())
+    .filter(Boolean)
+    .map((keyword) => new RegExp(`\\b${escapeRegExp(keyword.toLowerCase())}\\b`, "i")),
 }));
 
 const normalizeCategoryByKeyword = (value) => {
@@ -671,17 +707,26 @@ const formatCategoryToken = (token) => {
 export const normalizeCategoryLabel = (category = "") => {
   const raw = String(category).trim();
   if (!raw) return "";
+
+  // Se já veio “bonito”
   if (!raw.includes("_")) return normalizeCategoryByKeyword(raw);
+
+  // Se veio snake_case (ex: italian_restaurant)
   const tokens = raw
     .split("_")
     .map((item) => item.trim())
     .filter(Boolean);
+
   if (!tokens.length) return raw;
-  const last = tokens[tokens.length - 1];
-  if (last && CATEGORY_SUFFIXES.has(last.toLowerCase())) {
+
+  // Remove sufixos genéricos do final
+  const last = tokens[tokens.length - 1]?.toLowerCase();
+  if (last && CATEGORY_SUFFIXES.has(last)) {
     tokens.pop();
   }
+
   if (!tokens.length) return raw;
+
   const formatted = tokens.map(formatCategoryToken).join(" ");
   return normalizeCategoryByKeyword(formatted);
 };
@@ -689,7 +734,7 @@ export const normalizeCategoryLabel = (category = "") => {
 export const getCategoryIcon = (category = "") => {
   const normalized = String(category).toLowerCase();
   for (const rule of CATEGORY_ICON_RULES) {
-    if (rule.keywords.some((keyword) => normalized.includes(keyword))) {
+    if (rule.keywords.some((keyword) => normalized.includes(String(keyword).toLowerCase()))) {
       return rule.icon;
     }
   }
