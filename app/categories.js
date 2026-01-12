@@ -461,7 +461,7 @@ const CATEGORY_ICON_RULES = [
   { keywords: ["indonesia", "indonesian"], icon: "🇮🇩" },
   { keywords: ["malaysia", "malaysian"], icon: "🇲🇾" },
   { keywords: ["singapore", "singaporean"], icon: "🇸🇬" },
-  { keywords: ["italy", "italian","pizza"], icon: "🇮🇹" },
+  { keywords: ["italy", "italian"], icon: "🇮🇹" },
   { keywords: ["france", "french"], icon: "🇫🇷" },
   { keywords: ["greece", "greek"], icon: "🇬🇷" },
   { keywords: ["spain", "spanish"], icon: "🇪🇸" },
@@ -619,11 +619,11 @@ const MAIN_CATEGORY_RULES = [
   },
   {
     label: "Pizza",
-    keywords: ["pizza", "pizza_restaurant","restaurant","italian"],
+    keywords: ["pizza", "pizza_restaurant","italian"],
   },
   {
     label: "Italian",
-    keywords: ["food","italian"],
+    keywords: ["italian","pizza"],
   },
   {
     label: "Japanese",
