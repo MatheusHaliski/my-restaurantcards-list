@@ -3,7 +3,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { User } from "firebase/auth";
-import { doc, getFirestore, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  getFirestore,
+  runTransaction,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 
 import { getRestaurants } from "./firebase";
 import {
@@ -398,9 +406,13 @@ export default function RestaurantCardsPage() {
   const [pinVerified, setPinVerified] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMessage, setAuthModalMessage] = useState("");
+  const [authModalTitle, setAuthModalTitle] = useState("Sign in required");
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [wrongAttempts, setWrongAttempts] = useState(0);
 
   const REQUIRED_SIGNIN_PIN = "g58h19";
   const hasAccess = Boolean(user && pinVerified);
+  const isAuthReady = Boolean(db && hasFirebaseConfig);
 
   // Load restaurants
   useEffect(() => {
@@ -433,6 +445,7 @@ export default function RestaurantCardsPage() {
           setAuthModalMessage(
             "You are not signed in. Please sign in to access the restaurants list."
           );
+          setAuthModalTitle("Sign in required");
           setShowAuthModal(true);
         }
 
@@ -524,10 +537,67 @@ export default function RestaurantCardsPage() {
         setPinVerified(false);
         setPinInput("");
         setPinError("");
+        setIsBlocked(false);
+        setWrongAttempts(0);
       }
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!isAuthReady || !user) return;
+
+    let isMounted = true;
+
+    const syncControlUser = async () => {
+      try {
+        const controlRef = doc(db, "controluserslist", user.uid);
+        const blockedRef = doc(db, "controluserslist-blocked", user.uid);
+
+        const blockedSnap = await getDoc(blockedRef);
+        if (blockedSnap.exists()) {
+          if (!isMounted) return;
+          setIsBlocked(true);
+          setPinVerified(false);
+          setPinInput("");
+          setPinError("");
+          setAuthModalMessage(
+            "Your account has been blocked after too many incorrect PIN attempts."
+          );
+          setAuthModalTitle("Access blocked");
+          setShowAuthModal(true);
+          await signOutUser();
+          return;
+        }
+
+        setIsBlocked(false);
+
+        await setDoc(
+          controlRef,
+          {
+            uid: user.uid,
+            email: user.email || "",
+            displayName: user.displayName || "",
+            photoURL: user.photoURL || "",
+            lastSignInAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+
+        const controlSnap = await getDoc(controlRef);
+        const existingAttempts = Number(controlSnap.data()?.wrongattempts ?? 0);
+        if (isMounted) setWrongAttempts(existingAttempts);
+      } catch (err) {
+        console.error("[RestaurantCardsPage] syncControlUser failed:", err);
+      }
+    };
+
+    syncControlUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthReady, user]);
 
   const handleSignIn = async () => {
     setAuthError("");
@@ -552,13 +622,63 @@ export default function RestaurantCardsPage() {
       setPinVerified(false);
       setPinInput("");
       setPinError("");
+      setIsBlocked(false);
+      setWrongAttempts(0);
     } catch (err) {
       console.error("[RestaurantCardsPage] signOutUser failed:", err);
       setAuthError("Unable to sign out right now.");
     }
   };
 
-  const handlePinVerify = () => {
+  const recordWrongAttempt = async () => {
+    if (!db || !user) return null;
+    const controlRef = doc(db, "controluserslist", user.uid);
+    const blockedRef = doc(db, "controluserslist-blocked", user.uid);
+
+    return runTransaction(db, async (transaction) => {
+      const controlSnap = await transaction.get(controlRef);
+      const currentAttempts = Number(controlSnap.data()?.wrongattempts ?? 0);
+      const nextAttempts = currentAttempts + 1;
+
+      transaction.set(
+        controlRef,
+        {
+          uid: user.uid,
+          email: user.email || "",
+          displayName: user.displayName || "",
+          photoURL: user.photoURL || "",
+          wrongattempts: nextAttempts,
+          lastAttemptAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      if (nextAttempts > 3) {
+        transaction.set(
+          blockedRef,
+          {
+            uid: user.uid,
+            email: user.email || "",
+            displayName: user.displayName || "",
+            photoURL: user.photoURL || "",
+            wrongattempts: nextAttempts,
+            blockedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+
+      return nextAttempts;
+    });
+  };
+
+  const handlePinVerify = async () => {
+    if (isBlocked) {
+      setPinError("Your account has been blocked.");
+      setPinVerified(false);
+      return;
+    }
+
     const normalizedInput = pinInput.trim();
     if (!normalizedInput) {
       setPinError("Enter the required PIN to continue.");
@@ -566,9 +686,54 @@ export default function RestaurantCardsPage() {
       return;
     }
     if (normalizedInput !== REQUIRED_SIGNIN_PIN) {
-      setPinError("Incorrect PIN. Please try again.");
+      try {
+        const nextAttempts = await recordWrongAttempt();
+        if (nextAttempts !== null) {
+          setWrongAttempts(nextAttempts);
+          if (nextAttempts > 3) {
+            setIsBlocked(true);
+            setPinVerified(false);
+            setPinInput("");
+            setPinError("");
+            setAuthModalMessage(
+              "Your account has been blocked after too many incorrect PIN attempts."
+            );
+            setAuthModalTitle("Access blocked");
+            setShowAuthModal(true);
+            await signOutUser();
+            return;
+          }
+
+          setPinError(
+            nextAttempts >= 3
+              ? "Incorrect PIN. One more attempt will block your account."
+              : "Incorrect PIN. Please try again."
+          );
+        } else {
+          setPinError("Incorrect PIN. Please try again.");
+        }
+      } catch (err) {
+        console.error("[RestaurantCardsPage] recordWrongAttempt failed:", err);
+        setPinError("Incorrect PIN. Please try again.");
+      }
       setPinVerified(false);
       return;
+    }
+    if (db && user) {
+      const controlRef = doc(db, "controluserslist", user.uid);
+      try {
+        await setDoc(
+          controlRef,
+          {
+            wrongattempts: 0,
+            lastVerifiedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+        setWrongAttempts(0);
+      } catch (err) {
+        console.error("[RestaurantCardsPage] reset wrongattempts failed:", err);
+      }
     }
     setPinError("");
     setPinVerified(true);
@@ -777,7 +942,7 @@ export default function RestaurantCardsPage() {
         </section>
       )}
 
-      {user && !pinVerified && (
+      {user && !pinVerified && !isBlocked && (
         <section
           style={{
             marginTop: "24px",
@@ -828,6 +993,11 @@ export default function RestaurantCardsPage() {
           {pinError && (
             <div style={{ color: "#b45309", fontSize: "12px", marginTop: 8 }}>
               {pinError}
+            </div>
+          )}
+          {wrongAttempts > 0 && wrongAttempts <= 3 && (
+            <div style={{ color: "#64748b", fontSize: "12px", marginTop: 8 }}>
+              Incorrect attempts: {wrongAttempts} / 3
             </div>
           )}
           {!REQUIRED_SIGNIN_PIN && (
@@ -1196,7 +1366,7 @@ export default function RestaurantCardsPage() {
               id="auth-modal-title"
               style={{ fontSize: "20px", fontWeight: 700, marginBottom: "8px" }}
             >
-              Sign in required
+              {authModalTitle}
             </h2>
             <p style={{ color: "#475569", marginBottom: "20px" }}>{authModalMessage}</p>
             <button
