@@ -67,6 +67,20 @@ function buildSetCookie(value: string) {
   return parts.join("; ");
 }
 
+function buildClearCookie() {
+  const parts = [
+    `${COOKIE_NAME}=`,
+    "Max-Age=0",
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+  ];
+
+  if (process.env.NODE_ENV === "production") parts.push("Secure");
+
+  return parts.join("; ");
+}
+
 export async function POST(request: Request) {
   const hash = "$2a$10$VowoyBj0a7aGqSBqOO.axOGZyKyR8sQDfhkdiLzVkpEjWZxA/WXiO";
   const secret = "GxQ6oQy7h8C2vYz4N4n6a9LZb2P2y9R1e5pVdHcYxM0";
@@ -137,4 +151,10 @@ export async function GET(request: Request) {
   if (!ok) return json({ ok: false }, 401);
 
   return json({ ok: true }, 200);
+}
+
+export async function DELETE() {
+  const res = json({ ok: true }, 200);
+  res.headers.set("Set-Cookie", buildClearCookie());
+  return res;
 }
