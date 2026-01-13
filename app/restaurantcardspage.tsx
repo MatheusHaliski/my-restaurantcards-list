@@ -396,6 +396,8 @@ export default function RestaurantCardsPage() {
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
   const [pinVerified, setPinVerified] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMessage, setAuthModalMessage] = useState("");
 
   const REQUIRED_SIGNIN_PIN = "0R72F969LAA3P2B9";
   const hasAccess = Boolean(user && pinVerified);
@@ -427,8 +429,11 @@ export default function RestaurantCardsPage() {
           code === "permission-denied" ||
           String(message).toLowerCase().includes("missing or insufficient permissions")
         ) {
-          friendly =
-            "Permission denied (Firestore Rules). You must allow read access to 'restaurants' or sign in.";
+          friendly = "";
+          setAuthModalMessage(
+            "You are not signed in. Please sign in to access the restaurants list."
+          );
+          setShowAuthModal(true);
         }
 
         if (
@@ -446,7 +451,11 @@ export default function RestaurantCardsPage() {
         }
 
         if (isMounted) {
-          setError(`${friendly}\n\n[debug] ${code || "no-code"}: ${message}`);
+          if (friendly) {
+            setError(`${friendly}\n\n[debug] ${code || "no-code"}: ${message}`);
+          } else {
+            setError("");
+          }
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -457,6 +466,12 @@ export default function RestaurantCardsPage() {
     return () => {
       isMounted = false;
     };
+  }, [hasAccess]);
+
+  useEffect(() => {
+    if (hasAccess) {
+      setShowAuthModal(false);
+    }
   }, [hasAccess]);
 
   useEffect(() => {
@@ -1149,6 +1164,59 @@ export default function RestaurantCardsPage() {
           })}
         </div>
       </section>
+
+      {showAuthModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="auth-modal-title"
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "24px",
+            zIndex: 50,
+          }}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "16px",
+              maxWidth: "420px",
+              width: "100%",
+              padding: "24px",
+              boxShadow: "0 20px 45px rgba(15, 23, 42, 0.18)",
+              textAlign: "center",
+            }}
+          >
+            <h2
+              id="auth-modal-title"
+              style={{ fontSize: "20px", fontWeight: 700, marginBottom: "8px" }}
+            >
+              Sign in required
+            </h2>
+            <p style={{ color: "#475569", marginBottom: "20px" }}>{authModalMessage}</p>
+            <button
+              type="button"
+              onClick={() => setShowAuthModal(false)}
+              style={{
+                background: "#0f172a",
+                color: "#fff",
+                border: "none",
+                padding: "10px 18px",
+                borderRadius: "999px",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
         </>
       )}
     </div>
