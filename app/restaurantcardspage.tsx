@@ -397,7 +397,7 @@ export default function RestaurantCardsPage() {
   const [pinError, setPinError] = useState("");
   const [pinVerified, setPinVerified] = useState(false);
 
-  const REQUIRED_SIGNIN_PIN = "CHANGE_ME";
+  const REQUIRED_SIGNIN_PIN = "0R72F969LAA3P2B9";
   const hasAccess = Boolean(user && pinVerified);
 
   // Load restaurants
