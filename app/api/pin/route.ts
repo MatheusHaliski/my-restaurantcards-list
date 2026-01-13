@@ -82,7 +82,7 @@ function buildClearCookie() {
 }
 
 export async function POST(request: Request) {
-  const hash = "$2a$06$8dFxKypJIQHrSE0QAv79beLx4FAy2xvVWWt4KkNnE1IG.wy5Sl4YG";
+  const hash = "$2a$06$eRCKTb96P1Zq1BLyjdz6geRme1OgMnr.JrRsPKA10jnezTfWoGKbW";
   const secret = "GxQ6oQy7h8C2vYz4N4n6a9LZb2P2y9R1e5pVdHcYxM0";
 
   // lê PIN do body
