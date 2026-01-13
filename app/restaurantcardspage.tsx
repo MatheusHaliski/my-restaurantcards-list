@@ -399,7 +399,7 @@ export default function RestaurantCardsPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMessage, setAuthModalMessage] = useState("");
 
-  const REQUIRED_SIGNIN_PIN = "0R72F969LAA3P2B9";
+  const REQUIRED_SIGNIN_PIN = "G6VX47";
   const hasAccess = Boolean(user && pinVerified);
 
   // Load restaurants
