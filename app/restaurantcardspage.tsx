@@ -4,7 +4,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "firebase/auth";
-import { doc, getFirestore, updateDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getFirestore,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 
 import { getRestaurants } from "./firebase";
 import {
@@ -400,6 +409,9 @@ export default function RestaurantCardsPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMessage, setAuthModalMessage] = useState("");
   const [pinChecking, setPinChecking] = useState(false);
+  const [pinAttempts, setPinAttempts] = useState(0);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [checkingBlocked, setCheckingBlocked] = useState(false);
   const router = useRouter();
   const hasAccess = Boolean(user && pinVerified);
 
@@ -525,13 +537,54 @@ export default function RestaurantCardsPage() {
         setPinVerified(false);
         setPinInput("");
         setPinError("");
+        setPinAttempts(0);
+        setIsBlocked(false);
       }
     });
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !db || !hasFirebaseConfig) return;
+
+    let isMounted = true;
+    const checkBlockedAndLog = async () => {
+      setCheckingBlocked(true);
+      try {
+        const blockedRef = doc(db, "blockedUsers", user.uid);
+        const blockedSnap = await getDoc(blockedRef);
+        if (!isMounted) return;
+
+        if (blockedSnap.exists()) {
+          setIsBlocked(true);
+          window.alert("Your account has been blocked. Please contact support.");
+          await fetch("/api/pin", { method: "DELETE" });
+          await signOutUser();
+          return;
+        }
+
+        setIsBlocked(false);
+        await addDoc(collection(db, "userLogins"), {
+          uid: user.uid,
+          displayName: user.displayName ?? "",
+          email: user.email ?? "",
+          createdAt: serverTimestamp(),
+        });
+      } catch (error) {
+        console.error("[RestaurantCardsPage] Blocked check failed:", error);
+      } finally {
+        if (isMounted) setCheckingBlocked(false);
+      }
+    };
+
+    checkBlockedAndLog();
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || isBlocked) return;
 
     let isMounted = true;
     const checkPinCookie = async () => {
@@ -553,7 +606,7 @@ export default function RestaurantCardsPage() {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [user, isBlocked]);
 
   const handleSignIn = async () => {
     setAuthError("");
@@ -574,17 +627,44 @@ export default function RestaurantCardsPage() {
   const handleSignOut = async () => {
     setAuthError("");
     try {
+      await fetch("/api/pin", { method: "DELETE" });
       await signOutUser();
       setPinVerified(false);
       setPinInput("");
       setPinError("");
+      setPinAttempts(0);
     } catch (err) {
       console.error("[RestaurantCardsPage] signOutUser failed:", err);
       setAuthError("Unable to sign out right now.");
     }
   };
 
+  const blockUser = async (reason: string) => {
+    if (!user || !db || !hasFirebaseConfig) return;
+    try {
+      await setDoc(doc(db, "blockedUsers", user.uid), {
+        uid: user.uid,
+        displayName: user.displayName ?? "",
+        email: user.email ?? "",
+        blockedAt: serverTimestamp(),
+        reason,
+      });
+      setIsBlocked(true);
+      window.alert("Your account has been blocked. Please contact support.");
+      await fetch("/api/pin", { method: "DELETE" });
+      await signOutUser();
+    } catch (error) {
+      console.error("[RestaurantCardsPage] Failed to block user:", error);
+      setPinError("Unable to block account right now.");
+    }
+  };
+
   const handlePinVerify = async () => {
+    if (isBlocked || checkingBlocked) {
+      setPinError("This account is blocked.");
+      return;
+    }
+
     const normalizedInput = pinInput.trim();
     if (!normalizedInput) {
       setPinError("Enter the required PIN to continue.");
@@ -608,11 +688,19 @@ export default function RestaurantCardsPage() {
             : "Incorrect PIN. Please try again.";
         setPinError(message);
         setPinVerified(false);
+        if (response.status === 401) {
+          const nextAttempts = pinAttempts + 1;
+          setPinAttempts(nextAttempts);
+          if (nextAttempts >= 3) {
+            await blockUser("PIN entered incorrectly 3 times.");
+          }
+        }
         return;
       }
 
       setPinError("");
       setPinVerified(true);
+      setPinAttempts(0);
       router.replace("/restaurantcardspage");
     } catch (error) {
       console.error("[RestaurantCardsPage] PIN verification failed:", error);
@@ -826,7 +914,7 @@ export default function RestaurantCardsPage() {
         </section>
       )}
 
-      {user && !pinVerified && (
+      {user && !pinVerified && !isBlocked && (
         <section
           style={{
             marginTop: "24px",
