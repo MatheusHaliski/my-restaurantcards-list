@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { User } from "firebase/auth";
 import { doc, getFirestore, updateDoc } from "firebase/firestore";
 
@@ -398,8 +399,8 @@ export default function RestaurantCardsPage() {
   const [pinVerified, setPinVerified] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMessage, setAuthModalMessage] = useState("");
-
-  const REQUIRED_SIGNIN_PIN = "g58h19";
+  const [pinChecking, setPinChecking] = useState(false);
+  const router = useRouter();
   const hasAccess = Boolean(user && pinVerified);
 
   // Load restaurants
@@ -529,6 +530,31 @@ export default function RestaurantCardsPage() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+
+    let isMounted = true;
+    const checkPinCookie = async () => {
+      try {
+        const response = await fetch("/api/pin", {
+          method: "GET",
+        });
+        if (!response.ok) return;
+        if (isMounted) {
+          setPinVerified(true);
+          setPinError("");
+        }
+      } catch (error) {
+        console.error("[RestaurantCardsPage] Unable to verify PIN cookie:", error);
+      }
+    };
+
+    checkPinCookie();
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
   const handleSignIn = async () => {
     setAuthError("");
     setPinError("");
@@ -558,20 +584,43 @@ export default function RestaurantCardsPage() {
     }
   };
 
-  const handlePinVerify = () => {
+  const handlePinVerify = async () => {
     const normalizedInput = pinInput.trim();
     if (!normalizedInput) {
       setPinError("Enter the required PIN to continue.");
       setPinVerified(false);
       return;
     }
-    if (normalizedInput !== REQUIRED_SIGNIN_PIN) {
-      setPinError("Incorrect PIN. Please try again.");
+
+    setPinChecking(true);
+    try {
+      const response = await fetch("/api/pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: normalizedInput }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message =
+          typeof payload?.error === "string"
+            ? payload.error
+            : "Incorrect PIN. Please try again.";
+        setPinError(message);
+        setPinVerified(false);
+        return;
+      }
+
+      setPinError("");
+      setPinVerified(true);
+      router.replace("/restaurantcardspage");
+    } catch (error) {
+      console.error("[RestaurantCardsPage] PIN verification failed:", error);
+      setPinError("Unable to verify PIN right now.");
       setPinVerified(false);
-      return;
+    } finally {
+      setPinChecking(false);
     }
-    setPinError("");
-    setPinVerified(true);
   };
 
   const normalizedRestaurants = useMemo(
@@ -812,27 +861,23 @@ export default function RestaurantCardsPage() {
             <button
               type="button"
               onClick={handlePinVerify}
+              disabled={pinChecking}
               style={{
                 padding: "10px 16px",
                 borderRadius: "8px",
                 border: "none",
-                background: "#2563eb",
+                background: pinChecking ? "#93c5fd" : "#2563eb",
                 color: "#fff",
                 fontWeight: 600,
-                cursor: "pointer",
+                cursor: pinChecking ? "not-allowed" : "pointer",
               }}
             >
-              Verify PIN
+              {pinChecking ? "Verifying..." : "Verify PIN"}
             </button>
           </div>
           {pinError && (
             <div style={{ color: "#b45309", fontSize: "12px", marginTop: 8 }}>
               {pinError}
-            </div>
-          )}
-          {!REQUIRED_SIGNIN_PIN && (
-            <div style={{ color: "#b45309", fontSize: "12px", marginTop: 8 }}>
-              PIN is not configured yet. Update REQUIRED_SIGNIN_PIN to enable access.
             </div>
           )}
         </section>
