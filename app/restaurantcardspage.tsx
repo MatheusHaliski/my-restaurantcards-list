@@ -393,6 +393,12 @@ export default function RestaurantCardsPage() {
 
   const [user, setUser] = useState<User | null>(null);
   const [authError, setAuthError] = useState("");
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [pinVerified, setPinVerified] = useState(false);
+
+  const REQUIRED_SIGNIN_PIN = "CHANGE_ME";
+  const hasAccess = Boolean(user && pinVerified);
 
   // Load restaurants
   useEffect(() => {
@@ -400,6 +406,10 @@ export default function RestaurantCardsPage() {
 
     async function loadRestaurants() {
       try {
+        if (!hasAccess) {
+          setLoading(false);
+          return;
+        }
         setLoading(true);
         setError("");
 
@@ -447,7 +457,7 @@ export default function RestaurantCardsPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [hasAccess]);
 
   useEffect(() => {
     if (!db || !hasFirebaseConfig) return;
@@ -495,12 +505,19 @@ export default function RestaurantCardsPage() {
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((nextUser: User | null) => {
       setUser(nextUser);
+      if (!nextUser) {
+        setPinVerified(false);
+        setPinInput("");
+        setPinError("");
+      }
     });
     return () => unsubscribe();
   }, []);
 
   const handleSignIn = async () => {
     setAuthError("");
+    setPinError("");
+    setPinVerified(false);
     try {
       await signInWithGoogle();
     } catch (err: any) {
@@ -517,10 +534,29 @@ export default function RestaurantCardsPage() {
     setAuthError("");
     try {
       await signOutUser();
+      setPinVerified(false);
+      setPinInput("");
+      setPinError("");
     } catch (err) {
       console.error("[RestaurantCardsPage] signOutUser failed:", err);
       setAuthError("Unable to sign out right now.");
     }
+  };
+
+  const handlePinVerify = () => {
+    const normalizedInput = pinInput.trim();
+    if (!normalizedInput) {
+      setPinError("Enter the required PIN to continue.");
+      setPinVerified(false);
+      return;
+    }
+    if (normalizedInput !== REQUIRED_SIGNIN_PIN) {
+      setPinError("Incorrect PIN. Please try again.");
+      setPinVerified(false);
+      return;
+    }
+    setPinError("");
+    setPinVerified(true);
   };
 
   const normalizedRestaurants = useMemo(
@@ -709,6 +745,86 @@ export default function RestaurantCardsPage() {
         </div>
       </header>
 
+      {!user && (
+        <section
+          style={{
+            marginTop: "24px",
+            padding: "16px",
+            borderRadius: "12px",
+            background: "#f9fafb",
+            border: "1px solid #e5e7eb",
+          }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 6 }}>Sign in required</div>
+          <div style={{ color: "#4b5563", fontSize: "14px" }}>
+            Sign in with Google to access restaurant cards.
+          </div>
+        </section>
+      )}
+
+      {user && !pinVerified && (
+        <section
+          style={{
+            marginTop: "24px",
+            padding: "16px",
+            borderRadius: "12px",
+            background: "#f9fafb",
+            border: "1px solid #e5e7eb",
+          }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 6 }}>
+            Enter your access PIN
+          </div>
+          <div style={{ color: "#4b5563", fontSize: "14px", marginBottom: 12 }}>
+            This PIN is required after Google sign-in to unlock the site.
+          </div>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <input
+              type="password"
+              value={pinInput}
+              onChange={(event) => {
+                setPinInput(event.target.value);
+                setPinError("");
+              }}
+              placeholder="Enter PIN"
+              style={{
+                padding: "10px 12px",
+                borderRadius: "8px",
+                border: "1px solid #d1d5db",
+                minWidth: "220px",
+              }}
+            />
+            <button
+              type="button"
+              onClick={handlePinVerify}
+              style={{
+                padding: "10px 16px",
+                borderRadius: "8px",
+                border: "none",
+                background: "#2563eb",
+                color: "#fff",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Verify PIN
+            </button>
+          </div>
+          {pinError && (
+            <div style={{ color: "#b45309", fontSize: "12px", marginTop: 8 }}>
+              {pinError}
+            </div>
+          )}
+          {!REQUIRED_SIGNIN_PIN && (
+            <div style={{ color: "#b45309", fontSize: "12px", marginTop: 8 }}>
+              PIN is not configured yet. Update REQUIRED_SIGNIN_PIN to enable access.
+            </div>
+          )}
+        </section>
+      )}
+
+      {hasAccess && (
+        <>
       {/* Filters */}
       <section
         style={{
@@ -1033,6 +1149,8 @@ export default function RestaurantCardsPage() {
           })}
         </div>
       </section>
+        </>
+      )}
     </div>
   );
 }
