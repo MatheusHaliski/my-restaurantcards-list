@@ -627,6 +627,10 @@ const MAIN_CATEGORY_RULES = [
     keywords: ["brazilian", "brazil"],
   },
   {
+    label: "Buffet",
+    keywords: ["brazilian", "Buffets","buffet_restaurant"],
+  },
+  {
     label: "Asian Fusion",
     keywords: ["asian fusion"],
   },
