@@ -29,7 +29,6 @@ export const FOOD_CATEGORIES = [
   "Brazilian",
   "Grocery",
   "Arabic",
-  "Bakery",
   "Chicken Shop",
   "Açai & Bowls",
   "Argentine",
@@ -37,7 +36,7 @@ export const FOOD_CATEGORIES = [
   "Mexican",
   "Sandwich Shop",
   "Barbeque",
-  "Cafe",
+  "Bakery/Cafe",
   "Desserts",
 ];
 
@@ -51,13 +50,12 @@ const CATEGORY_ICON_RULES = [
   { keywords: ["mexican"], icon: "🌮" },
   { keywords: ["arabic"], icon: "🥙" },
   { keywords: ["argentine"], icon: "🇦🇷" },
-  { keywords: ["bakery"], icon: "🥐" },
   { keywords: ["desserts"], icon: "🍨" },
   { keywords: ["chicken shop"], icon: "🍗" },
   { keywords: ["sandwich shop"], icon: "🥪" },
   { keywords: ["barbeque"], icon: "🍖" },
   { keywords: ["bar"], icon: "🍸" },
-  { keywords: ["cafe"], icon: "☕" },
+  { keywords: ["bakery/cafe"], icon: "🥐" },
   { keywords: ["grocery"], icon: "🛒" },
   { keywords: ["fast food"], icon: "🍔" },
   { keywords: ["brazilian"], icon: "🇧🇷" },
@@ -157,7 +155,7 @@ const LOT_RULES = [
 
   { label: "Bar", keywords: ["bar", "bars", "pub", "lounges", "cocktail bars", "nightlife"] },
 
-  { label: "Cafe", keywords: ["coffee & tea", "coffee", "cafe", "cafes", "cafeteria", "tea"] },
+  { label: "Bakery/Cafe", keywords: ["coffee & tea", "coffee", "cafe", "cafes", "cafeteria", "tea"] },
 
   { label: "Grocery", keywords: ["grocery", "international grocery", "market", "farmer", "farmers market", "deli", "delicatessen", "shoprite", "festival", "festval"] },
 
