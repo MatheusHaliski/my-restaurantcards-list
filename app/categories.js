@@ -50,7 +50,7 @@ const CATEGORY_ICON_RULES = [
   { keywords: ["italian/pizza", "italian", "pizza"], icon: "🍕" },
   { keywords: ["mexican"], icon: "🌮" },
   { keywords: ["arabic"], icon: "🥙" },
-  { keywords: ["argentine"], icon: "🥩" },
+  { keywords: ["argentine"], icon: "🇦🇷" },
   { keywords: ["bakery"], icon: "🥐" },
   { keywords: ["desserts"], icon: "🍨" },
   { keywords: ["chicken shop"], icon: "🍗" },
