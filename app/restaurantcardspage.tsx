@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "firebase/auth";
+import Swal from "sweetalert2";
 import {
   addDoc,
   collection,
@@ -557,7 +558,11 @@ export default function RestaurantCardsPage() {
 
         if (blockedSnap.exists()) {
           setIsBlocked(true);
-          window.alert("Your account has been blocked. Please contact support.");
+          void Swal.fire({
+            icon: "error",
+            title: "Account blocked",
+            text: "Your account has been blocked. Please contact support.",
+          });
           await fetch("/api/pin", { method: "DELETE" });
           await signOutUser();
           return;
@@ -650,7 +655,11 @@ export default function RestaurantCardsPage() {
         reason,
       });
       setIsBlocked(true);
-      window.alert("Your account has been blocked. Please contact support.");
+      void Swal.fire({
+        icon: "error",
+        title: "Account blocked",
+        text: "Your account has been blocked. Please contact support.",
+      });
       await fetch("/api/pin", { method: "DELETE" });
       await signOutUser();
     } catch (error) {
