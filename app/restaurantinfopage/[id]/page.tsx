@@ -383,7 +383,10 @@ export default function RestaurantInfoPage() {
   const stateName = String((restaurant as any).state || "");
   const countryName = String((restaurant as any).country || "");
   const flagSrc = getFlagSrc(countryName);
-  const locationParts = [cityName, stateName, countryName].filter(Boolean);
+  const streetAddress = String((restaurant as any).address || "");
+  const locationParts = [streetAddress, cityName, stateName, countryName].filter(
+    Boolean
+  );
   const locationQuery = locationParts.join(", ");
   const mapsLink = locationQuery
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
