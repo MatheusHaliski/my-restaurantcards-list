@@ -47,19 +47,6 @@ type ReviewRecord = {
 
 const db = firebaseApp ? getFirestore(firebaseApp) : null;
 
-const formatValue = (value: unknown) => {
-  if (Array.isArray(value)) {
-    return value.length ? value.join(", ") : "—";
-  }
-  if (value && typeof value === "object") {
-    return JSON.stringify(value);
-  }
-  if (value === null || value === undefined || value === "") {
-    return "—";
-  }
-  return String(value);
-};
-
 const toDateValue = (review: ReviewRecord) => {
   if (review.createdAt) {
     return new Date(review.createdAt);
@@ -309,17 +296,6 @@ export default function RestaurantInfoPage() {
     return [];
   }, [categoryEntry]);
 
-  const visibleDetails = useMemo(
-    () =>
-      restaurantDetails.filter(([key]) => {
-        const normalized = String(key).toLowerCase();
-        return (
-          !hiddenDetailKeys.has(normalized) && !categoryKeys.has(normalized)
-        );
-      }),
-    [restaurantDetails, hiddenDetailKeys, categoryKeys]
-  );
-
   const handleSubmitReview = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -403,8 +379,22 @@ export default function RestaurantInfoPage() {
   ]
     .filter(Boolean)
     .join(" • ");
+  const cityName = String((restaurant as any).city || "");
+  const stateName = String((restaurant as any).state || "");
   const countryName = String((restaurant as any).country || "");
   const flagSrc = getFlagSrc(countryName);
+  const locationParts = [cityName, stateName, countryName].filter(Boolean);
+  const locationQuery = locationParts.join(", ");
+  const mapsLink = locationQuery
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        locationQuery
+      )}`
+    : "";
+  const mapsEmbed = locationQuery
+    ? `https://www.google.com/maps?q=${encodeURIComponent(
+        locationQuery
+      )}&output=embed`
+    : "";
 
   return (
     <div
@@ -595,19 +585,80 @@ export default function RestaurantInfoPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                gap: "12px",
+                gap: "16px",
                 marginTop: "12px",
               }}
             >
-              {visibleDetails.map(([key, value]) => (
-                <div key={key}>
-                  <div style={{ fontSize: "12px", color: "#475569" }}>{key}</div>
-                  <div style={{ fontWeight: 600, marginTop: "4px" }}>
-                    {formatValue(value)}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                  gap: "12px",
+                }}
+              >
+                {[
+                  { label: "City", value: cityName },
+                  { label: "State", value: stateName },
+                  { label: "Country", value: countryName },
+                ].map((detail) => (
+                  <div key={detail.label}>
+                    <div style={{ fontSize: "12px", color: "#64748b" }}>
+                      {detail.label}
+                    </div>
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        marginTop: "4px",
+                        color: "#1d4ed8",
+                        background: "#eff6ff",
+                        padding: "6px 10px",
+                        borderRadius: "999px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      {detail.value || "Unavailable"}
+                    </div>
                   </div>
+                ))}
+              </div>
+
+              {mapsEmbed ? (
+                <div
+                  style={{
+                    position: "relative",
+                    borderRadius: "12px",
+                    overflow: "hidden",
+                    border: "1px solid #e2e8f0",
+                    minHeight: "220px",
+                  }}
+                >
+                  <iframe
+                    title="Restaurant location map"
+                    src={mapsEmbed}
+                    style={{ border: 0, width: "100%", height: "240px" }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                  <a
+                    href={mapsLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Open location in Google Maps"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      textIndent: "-9999px",
+                    }}
+                  >
+                    Open in Google Maps
+                  </a>
                 </div>
-              ))}
+              ) : (
+                <p style={{ margin: 0, color: "#64748b" }}>
+                  Location map unavailable.
+                </p>
+              )}
             </div>
           </div>
         </div>
