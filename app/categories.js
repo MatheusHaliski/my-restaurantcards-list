@@ -59,7 +59,7 @@ const CATEGORY_ICON_RULES = [
   { keywords: ["bakery/cafe"], icon: "🥐" },
   { keywords: ["grocery"], icon: "🛒" },
   { keywords: ["fast food"], icon: "🍔" },
-  { keywords: ["casual/local"], icon: "" },
+  { keywords: ["casual/local"], icon: "📍" },
 ];
 
 // =====================================================
