@@ -188,10 +188,6 @@ const LOT_RULES = [
 
   { label: "Argentine", keywords: ["argentine", "argentina", "empanada", "empanadas", "parrilla", "medialuna"] },
 
-  // ⚠️ você tinha "Bakery" e "Bakery/Cafe" separados.
-  // Mantive como você escreveu. (Se preferir, unificamos num só LOTE.)
-  { label: "Bakery", keywords: ["bakery", "bakeries", "padaria", "panificadora", "pão", "pao", "patisserie", "cake shop"] },
-
   { label: "Desserts", keywords: ["dessert", "desserts", "ice cream", "frozen yogurt", "gelato", "donut", "donuts", "chocolate"] },
 
   { label: "Chicken Shop", keywords: ["chicken shop", "chicken wings", "wings", "kfc", "popeyes", "chick-fil-a"] },
@@ -202,7 +198,7 @@ const LOT_RULES = [
 
   { label: "Bar", keywords: ["bar", "bars", "pub", "lounges", "cocktail bars", "nightlife"] },
 
-  { label: "Bakery/Cafe", keywords: ["coffee & tea", "coffee", "cafe", "cafes", "cafeteria", "tea"] },
+  { label: "Bakery/Cafe", keywords: ["coffee & tea", "coffee", "cafe", "cafes", "cafeteria", "tea","bakery", "bakeries", "padaria", "panificadora", "pão", "pao", "patisserie", "cake shop"] },
 
   { label: "Grocery", keywords: ["grocery", "international grocery", "market", "farmer", "farmers market", "deli", "delicatessen", "shoprite", "festival", "festval"] },
 
@@ -228,7 +224,7 @@ const LOT_RULES = [
   },
 
   // fallback BR
-  { label: "Brazilian", keywords: ["brazilian", "brazil", "brasil", "feijoada", "mineiro", "minas"] },
+  { label: "Brazilian", keywords: ["brazilian", "brazil", "brasil", "feijoada", "mineiro", "minas","baiano","baiana","cantinho"] },
 ];
 
 const LOT_REGEX_RULES = LOT_RULES.map((rule) => ({
@@ -254,4 +250,6 @@ function formatToken(token) {
   const t = token.trim();
   if (!t) return "";
   if (t === t.toUpperCase()) return t;
-  return t.
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
