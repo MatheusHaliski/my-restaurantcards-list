@@ -237,12 +237,17 @@ const LOT_REGEX_RULES = LOT_RULES.map((rule) => ({
 
 function normalizeToLot(value) {
   const normalized = norm(value);
+
+  // 1) tenta bater em QUALQUER LOTE (exceto Brazilian, que agora é fallback)
   for (const rule of LOT_REGEX_RULES) {
+    if (rule.label === "Brazilian") continue; // segurança (mesmo removendo do LOT_RULES)
     if (rule.patterns.some((pattern) => pattern.test(normalized))) {
       return rule.label;
     }
   }
-  return value;
+
+  // 2) não bateu em nenhum lote → Brazilian
+  return "Brazilian";
 }
 
 function formatToken(token) {
