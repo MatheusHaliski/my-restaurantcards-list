@@ -51,14 +51,6 @@ export default function Home() {
           background: "#ffffff",
         }}
       >
-        <div style={{ marginBottom: "24px" }}>
-          <div style={{ fontSize: "24px", fontWeight: 700, color: "#0f172a" }}>
-            FriendlyEats Access
-          </div>
-          <div style={{ color: "#475569", marginTop: "6px" }}>
-            Sign in with Google and enter your PIN to continue to the restaurant cards.
-          </div>
-        </div>
 
         {!authReady && (
           <div style={{ color: "#64748b", fontSize: "14px" }}>Checking session...</div>
