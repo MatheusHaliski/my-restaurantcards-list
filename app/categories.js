@@ -59,7 +59,7 @@ const CATEGORY_ICON_RULES = [
   { keywords: ["bakery/cafe"], icon: "🥐" },
   { keywords: ["grocery"], icon: "🛒" },
   { keywords: ["fast food"], icon: "🍔" },
-  { keywords: ["brazilian"], icon: "🇧🇷" },
+  { keywords: ["casual/local"], icon: "" },
 ];
 
 // =====================================================
@@ -184,7 +184,7 @@ const LOT_RULES = [
   },
 
   // fallback BR
-  { label: "Brazilian", keywords: ["brazilian", "brazil", "brasil", "feijoada", "mineiro", "minas"] },
+  { label: "casual/local", keywords: ["brazilian", "brazil", "brasil", "feijoada", "mineiro", "minas"] },
 ];
 
 const LOT_REGEX_RULES = LOT_RULES.map((rule) => ({
