@@ -13,13 +13,13 @@ try {
 }
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyA_pHu5ASG9PAhmcEwxcckXGovRWYW0Mic",
-  authDomain: "funcionarioslistaapp2025.firebaseapp.com",
-  projectId: "funcionarioslistaapp2025",
-  storageBucket: "funcionarioslistaapp2025.firebasestorage.app",
-  messagingSenderId: "457209482063",
-  appId: "1:457209482063:web:3fc5d0f3aedd2e7ebe133a",
-  measurementId: "G-34JDWQ1ZXW"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? "",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID ?? ""
 };
 
 export const hasFirebaseConfig =
