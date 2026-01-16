@@ -52,6 +52,20 @@ type Restaurant = {
 };
 
 const db = firebaseApp ? getFirestore(firebaseApp) : null;
+const SESSION_TOKEN_KEY = "restaurantcards_session_token";
+const ALLOWED_SIGNIN_EMAIL = "matheushaliski@gmail.com";
+
+const encodeBase64Url = (bytes: Uint8Array) =>
+  btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+
+const createSessionToken = () => {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return encodeBase64Url(bytes);
+};
 
 const parseRatingValue = (rating: unknown) => {
   if (typeof rating === "number" && !Number.isNaN(rating)) return rating;
@@ -413,8 +427,19 @@ export default function RestaurantCardsPage() {
   const [pinAttempts, setPinAttempts] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
   const [checkingBlocked, setCheckingBlocked] = useState(false);
+  const [sessionToken, setSessionToken] = useState("");
   const router = useRouter();
-  const hasAccess = Boolean(user && pinVerified);
+  const hasAccess = Boolean(user && pinVerified && sessionToken);
+
+  const storeSessionToken = (token: string) => {
+    setSessionToken(token);
+    sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+  };
+
+  const clearSessionToken = () => {
+    setSessionToken("");
+    sessionStorage.removeItem(SESSION_TOKEN_KEY);
+  };
 
   // Load restaurants
   useEffect(() => {
@@ -489,6 +514,13 @@ export default function RestaurantCardsPage() {
   }, [hasAccess]);
 
   useEffect(() => {
+    const storedToken = sessionStorage.getItem(SESSION_TOKEN_KEY);
+    if (storedToken) {
+      setSessionToken(storedToken);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!db || !hasFirebaseConfig) return;
 
     const pendingUpdates = restaurants.filter(
@@ -540,10 +572,30 @@ export default function RestaurantCardsPage() {
         setPinError("");
         setPinAttempts(0);
         setIsBlocked(false);
+        clearSessionToken();
       }
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const normalizedEmail = (user.email ?? "").toLowerCase();
+    if (normalizedEmail !== ALLOWED_SIGNIN_EMAIL) {
+      setAuthError("This account is not authorized to access this app.");
+      setPinVerified(false);
+      setPinInput("");
+      setPinError("");
+      clearSessionToken();
+      void signOutUser();
+      return;
+    }
+
+    if (!sessionToken) {
+      storeSessionToken(createSessionToken());
+    }
+  }, [user, sessionToken]);
 
   useEffect(() => {
     if (!user || !db || !hasFirebaseConfig) return;
@@ -564,6 +616,7 @@ export default function RestaurantCardsPage() {
             text: "Your account has been blocked. Please contact support.",
           });
           await fetch("/api/pin", { method: "DELETE" });
+          clearSessionToken();
           await signOutUser();
           return;
         }
@@ -618,7 +671,23 @@ export default function RestaurantCardsPage() {
     setPinError("");
     setPinVerified(false);
     try {
-      await signInWithGoogle();
+      const credential = await signInWithGoogle();
+      const normalizedEmail = (credential?.user?.email ?? "").toLowerCase();
+      if (normalizedEmail !== ALLOWED_SIGNIN_EMAIL) {
+        await signOutUser();
+        setAuthError("This account is not authorized to access this app.");
+        clearSessionToken();
+        return;
+      }
+      const token = createSessionToken();
+      storeSessionToken(token);
+      void Swal.fire({
+        icon: "success",
+        title: "Success!",
+        text: "You are signed in!",
+        timer: 2000,
+        showConfirmButton: false,
+      });
     } catch (err: any) {
       console.error("[RestaurantCardsPage] signInWithGoogle failed:", err);
       setAuthError(
@@ -633,6 +702,7 @@ export default function RestaurantCardsPage() {
     setAuthError("");
     try {
       await fetch("/api/pin", { method: "DELETE" });
+      clearSessionToken();
       await signOutUser();
       setPinVerified(false);
       setPinInput("");
@@ -661,6 +731,7 @@ export default function RestaurantCardsPage() {
         text: "Your account has been blocked. Please contact support.",
       });
       await fetch("/api/pin", { method: "DELETE" });
+      clearSessionToken();
       await signOutUser();
     } catch (error) {
       console.error("[RestaurantCardsPage] Failed to block user:", error);
