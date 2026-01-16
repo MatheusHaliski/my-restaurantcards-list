@@ -26,7 +26,7 @@ export const FOOD_CATEGORIES = [
   "Fast Food",
   "Italian/Pizza",
   "Japanese",
-  "Brazilian",
+  "Casual/Local",
   "Grocery",
   "Arabic",
   "Chicken Shop",
