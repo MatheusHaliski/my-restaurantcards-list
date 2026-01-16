@@ -23,6 +23,7 @@ export const LIFESTYLE_CATEGORIES = [
 
 // ✅ LOTES (as únicas categorias que aparecem no filtro do menu)
 export const FOOD_CATEGORIES = [
+  "Vegan", // ✅ NOVO
   "Fast Food",
   "Italian/Pizza",
   "Japanese",
@@ -44,6 +45,7 @@ export const FOOD_CATEGORIES = [
 // ✅ Ícones (para mostrar no UI)
 // =====================================================
 const CATEGORY_ICON_RULES = [
+  { keywords: ["vegan", "vegano", "plant based", "plant-based", "plantbased"], icon: "🥗" }, // ✅ NOVO
   { keywords: ["açai & bowls", "acai & bowls", "acai", "açaí"], icon: "🥣" },
   { keywords: ["japanese"], icon: "🍣" },
   { keywords: ["italian/pizza", "italian", "pizza"], icon: "🍕" },
@@ -101,6 +103,49 @@ const CATEGORY_SUFFIXES = new Set([
 // ✅ Regras: keywords antigas -> LOTE novo
 // (Ordem importa: regras mais específicas primeiro)
 const LOT_RULES = [
+  // ✅ NOVO: Vegan primeiro pra ter prioridade
+  {
+    label: "Vegan",
+    keywords: [
+      "vegan",
+      "vegano",
+      "vegana",
+      "veg",
+      "plant based",
+      "plant-based",
+      "plantbased",
+      "vegetal",
+      "100% vegetal",
+      "healthy",
+      "saudavel",
+      "saudável",
+      "healthy food",
+      "alimentacao saudavel",
+      "alimentação saudável",
+      "salad",
+      "salads",
+      "salada",
+      "saladas",
+      "smoothie",
+      "smoothies",
+      "green juice",
+      "suco verde",
+      "bowl",
+      "bowls",
+      "vegan bowl",
+      "veggie",
+      "vegetariano",
+      "vegetariana",
+      "raw",
+      "raw food",
+      "organic",
+      "organico",
+      "orgânico",
+      "organica",
+      "orgânica",
+    ],
+  },
+
   { label: "Açai & Bowls", keywords: ["acai bowls", "açaí", "acai", "bowls"] },
 
   {
@@ -143,6 +188,8 @@ const LOT_RULES = [
 
   { label: "Argentine", keywords: ["argentine", "argentina", "empanada", "empanadas", "parrilla", "medialuna"] },
 
+  // ⚠️ você tinha "Bakery" e "Bakery/Cafe" separados.
+  // Mantive como você escreveu. (Se preferir, unificamos num só LOTE.)
   { label: "Bakery", keywords: ["bakery", "bakeries", "padaria", "panificadora", "pão", "pao", "patisserie", "cake shop"] },
 
   { label: "Desserts", keywords: ["dessert", "desserts", "ice cream", "frozen yogurt", "gelato", "donut", "donuts", "chocolate"] },
@@ -207,63 +254,4 @@ function formatToken(token) {
   const t = token.trim();
   if (!t) return "";
   if (t === t.toUpperCase()) return t;
-  return t.charAt(0).toUpperCase() + t.slice(1);
-}
-
-// Exportado para o app: garante que qualquer string vira um LOTE “bonitinho”
-export const normalizeCategoryLabel = (category = "") => {
-  const raw = String(category).trim();
-  if (!raw) return "";
-
-  // Já é um lote válido? devolve igual
-  if (FOOD_CATEGORIES.includes(raw)) return raw;
-
-  // Se veio snake_case (ex: italian_restaurant)
-  if (raw.includes("_")) {
-    const tokens = raw
-      .split("_")
-      .map((x) => x.trim())
-      .filter(Boolean);
-
-    // remove sufixo genérico
-    const last = tokens[tokens.length - 1]?.toLowerCase();
-    if (last && CATEGORY_SUFFIXES.has(last)) tokens.pop();
-
-    const pretty = tokens.map(formatToken).join(" ");
-    const mapped = normalizeToLot(pretty);
-
-    // se virou um lote válido, retorna
-    if (FOOD_CATEGORIES.includes(mapped)) return mapped;
-
-    // tenta normalizar o raw mesmo
-    const mappedRaw = normalizeToLot(raw);
-    if (FOOD_CATEGORIES.includes(mappedRaw)) return mappedRaw;
-
-    return pretty;
-  }
-
-  // Caso simples: tenta mapear por keyword
-  const mapped = normalizeToLot(raw);
-  if (FOOD_CATEGORIES.includes(mapped)) return mapped;
-
-  // fallback: se parece “restaurant/restaurante” e não bateu nada → Brazilian
-  const r = norm(raw);
-  if (r.includes("restaurant") || r.includes("restaurante")) return "Brazilian";
-
-  return raw;
-};
-
-// Exportado: retorna emoji conforme a categoria (lote)
-export const getCategoryIcon = (category = "") => {
-  const normalized = norm(category);
-
-  // se veio algo antigo, tenta normalizar pro lote
-  const maybeLot = FOOD_CATEGORIES.includes(category) ? category : normalizeCategoryLabel(category);
-  const lotNorm = norm(maybeLot);
-
-  for (const rule of CATEGORY_ICON_RULES) {
-    if (rule.keywords.some((k) => lotNorm.includes(norm(k)))) return rule.icon;
-  }
-
-  return "🍽️";
-};
+  return t.
