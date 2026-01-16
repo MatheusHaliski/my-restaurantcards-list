@@ -3,18 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { User } from "firebase/auth";
-import Swal from "sweetalert2";
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getFirestore,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
+import { doc, getFirestore, updateDoc } from "firebase/firestore";
 
 import { getRestaurants } from "./firebase";
 import {
@@ -22,12 +11,8 @@ import {
   getCategoryIcon,
   normalizeCategoryLabel,
 } from "./categories";
-import {
-  signInWithGoogle,
-  signOutUser,
-  subscribeToAuthChanges,
-} from "./auth";
 import { firebaseApp, hasFirebaseConfig } from "./firebaseClient";
+import { useAuthGate } from "./useAuthGate";
 
 type Restaurant = {
   id: string;
@@ -52,21 +37,6 @@ type Restaurant = {
 };
 
 const db = firebaseApp ? getFirestore(firebaseApp) : null;
-const SESSION_TOKEN_KEY = "restaurantcards_session_token";
-const ALLOWED_SIGNIN_EMAIL = "matheushaliski@gmail.com";
-
-const encodeBase64Url = (bytes: Uint8Array) =>
-  btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-
-const createSessionToken = () => {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return encodeBase64Url(bytes);
-};
-
 const parseRatingValue = (rating: unknown) => {
   if (typeof rating === "number" && !Number.isNaN(rating)) return rating;
   if (typeof rating === "string") {
@@ -416,30 +386,14 @@ export default function RestaurantCardsPage() {
   const [category, setCategory] = useState("");
   const [starsFilter, setStarsFilter] = useState("");
 
-  const [user, setUser] = useState<User | null>(null);
-  const [authError, setAuthError] = useState("");
-  const [pinInput, setPinInput] = useState("");
-  const [pinError, setPinError] = useState("");
-  const [pinVerified, setPinVerified] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authModalMessage, setAuthModalMessage] = useState("");
-  const [pinChecking, setPinChecking] = useState(false);
-  const [pinAttempts, setPinAttempts] = useState(0);
-  const [isBlocked, setIsBlocked] = useState(false);
-  const [checkingBlocked, setCheckingBlocked] = useState(false);
-  const [sessionToken, setSessionToken] = useState("");
   const router = useRouter();
-  const hasAccess = Boolean(user && pinVerified && sessionToken);
+  const { user, authReady, authError, hasAccess, handleSignOut } = useAuthGate();
 
-  const storeSessionToken = (token: string) => {
-    setSessionToken(token);
-    sessionStorage.setItem(SESSION_TOKEN_KEY, token);
-  };
-
-  const clearSessionToken = () => {
-    setSessionToken("");
-    sessionStorage.removeItem(SESSION_TOKEN_KEY);
-  };
+  useEffect(() => {
+    if (authReady && !hasAccess) {
+      router.replace("/");
+    }
+  }, [authReady, hasAccess, router]);
 
   // Load restaurants
   useEffect(() => {
@@ -469,10 +423,7 @@ export default function RestaurantCardsPage() {
           String(message).toLowerCase().includes("missing or insufficient permissions")
         ) {
           friendly = "";
-          setAuthModalMessage(
-            "You are not signed in. Please sign in to access the restaurants list."
-          );
-          setShowAuthModal(true);
+          router.replace("/");
         }
 
         if (
@@ -506,19 +457,6 @@ export default function RestaurantCardsPage() {
       isMounted = false;
     };
   }, [hasAccess]);
-
-  useEffect(() => {
-    if (hasAccess) {
-      setShowAuthModal(false);
-    }
-  }, [hasAccess]);
-
-  useEffect(() => {
-    const storedToken = sessionStorage.getItem(SESSION_TOKEN_KEY);
-    if (storedToken) {
-      setSessionToken(storedToken);
-    }
-  }, []);
 
   useEffect(() => {
     if (!db || !hasFirebaseConfig) return;
@@ -561,235 +499,6 @@ export default function RestaurantCardsPage() {
         });
     });
   }, [restaurants]);
-
-  // Auth listener
-  useEffect(() => {
-    const unsubscribe = subscribeToAuthChanges((nextUser: User | null) => {
-      setUser(nextUser);
-      if (!nextUser) {
-        setPinVerified(false);
-        setPinInput("");
-        setPinError("");
-        setPinAttempts(0);
-        setIsBlocked(false);
-        clearSessionToken();
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const normalizedEmail = (user.email ?? "").toLowerCase();
-    if (normalizedEmail !== ALLOWED_SIGNIN_EMAIL) {
-      setAuthError("This account is not authorized to access this app.");
-      setPinVerified(false);
-      setPinInput("");
-      setPinError("");
-      clearSessionToken();
-      void signOutUser();
-      return;
-    }
-
-    if (!sessionToken) {
-      storeSessionToken(createSessionToken());
-    }
-  }, [user, sessionToken]);
-
-  useEffect(() => {
-    if (!user || !db || !hasFirebaseConfig) return;
-
-    let isMounted = true;
-    const checkBlockedAndLog = async () => {
-      setCheckingBlocked(true);
-      try {
-        const blockedRef = doc(db, "blockedUsers", user.uid);
-        const blockedSnap = await getDoc(blockedRef);
-        if (!isMounted) return;
-
-        if (blockedSnap.exists()) {
-          setIsBlocked(true);
-          void Swal.fire({
-            icon: "error",
-            title: "Account blocked",
-            text: "Your account has been blocked. Please contact support.",
-          });
-          await fetch("/api/pin", { method: "DELETE" });
-          clearSessionToken();
-          await signOutUser();
-          return;
-        }
-
-        setIsBlocked(false);
-        await addDoc(collection(db, "userLogins"), {
-          uid: user.uid,
-          displayName: user.displayName ?? "",
-          email: user.email ?? "",
-          createdAt: serverTimestamp(),
-        });
-      } catch (error) {
-        console.error("[RestaurantCardsPage] Blocked check failed:", error);
-      } finally {
-        if (isMounted) setCheckingBlocked(false);
-      }
-    };
-
-    checkBlockedAndLog();
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
-
-  useEffect(() => {
-    if (!user || isBlocked) return;
-
-    let isMounted = true;
-    const checkPinCookie = async () => {
-      try {
-        const response = await fetch("/api/pin", {
-          method: "GET",
-        });
-        if (!response.ok) return;
-        if (isMounted) {
-          setPinVerified(true);
-          setPinError("");
-        }
-      } catch (error) {
-        console.error("[RestaurantCardsPage] Unable to verify PIN cookie:", error);
-      }
-    };
-
-    checkPinCookie();
-    return () => {
-      isMounted = false;
-    };
-  }, [user, isBlocked]);
-
-  const handleSignIn = async () => {
-    setAuthError("");
-    setPinError("");
-    setPinVerified(false);
-    try {
-      const credential = await signInWithGoogle();
-      const normalizedEmail = (credential?.user?.email ?? "").toLowerCase();
-      if (normalizedEmail !== ALLOWED_SIGNIN_EMAIL) {
-        await signOutUser();
-        setAuthError("This account is not authorized to access this app.");
-        clearSessionToken();
-        return;
-      }
-      const token = createSessionToken();
-      storeSessionToken(token);
-      void Swal.fire({
-        icon: "success",
-        title: "Success!",
-        text: "You are signed in!",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-    } catch (err: any) {
-      console.error("[RestaurantCardsPage] signInWithGoogle failed:", err);
-      setAuthError(
-        err?.code === "auth/unauthorized-domain"
-          ? "Unauthorized domain for Google Sign-In. Add your domain in Firebase Auth > Settings > Authorized domains."
-          : "Unable to sign in with Google."
-      );
-    }
-  };
-
-  const handleSignOut = async () => {
-    setAuthError("");
-    try {
-      await fetch("/api/pin", { method: "DELETE" });
-      clearSessionToken();
-      await signOutUser();
-      setPinVerified(false);
-      setPinInput("");
-      setPinError("");
-      setPinAttempts(0);
-    } catch (err) {
-      console.error("[RestaurantCardsPage] signOutUser failed:", err);
-      setAuthError("Unable to sign out right now.");
-    }
-  };
-
-  const blockUser = async (reason: string) => {
-    if (!user || !db || !hasFirebaseConfig) return;
-    try {
-      await setDoc(doc(db, "blockedUsers", user.uid), {
-        uid: user.uid,
-        displayName: user.displayName ?? "",
-        email: user.email ?? "",
-        blockedAt: serverTimestamp(),
-        reason,
-      });
-      setIsBlocked(true);
-      void Swal.fire({
-        icon: "error",
-        title: "Account blocked",
-        text: "Your account has been blocked. Please contact support.",
-      });
-      await fetch("/api/pin", { method: "DELETE" });
-      clearSessionToken();
-      await signOutUser();
-    } catch (error) {
-      console.error("[RestaurantCardsPage] Failed to block user:", error);
-      setPinError("Unable to block account right now.");
-    }
-  };
-
-  const handlePinVerify = async () => {
-    if (isBlocked || checkingBlocked) {
-      setPinError("This account is blocked.");
-      return;
-    }
-
-    const normalizedInput = pinInput.trim();
-    if (!normalizedInput) {
-      setPinError("Enter the required PIN to continue.");
-      setPinVerified(false);
-      return;
-    }
-
-    setPinChecking(true);
-    try {
-      const response = await fetch("/api/pin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin: normalizedInput }),
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        const message =
-          typeof payload?.error === "string"
-            ? payload.error
-            : "Incorrect PIN. Please try again.";
-        setPinError(message);
-        setPinVerified(false);
-        if (response.status === 401) {
-          const nextAttempts = pinAttempts + 1;
-          setPinAttempts(nextAttempts);
-          if (nextAttempts >= 3) {
-            await blockUser("PIN entered incorrectly 3 times.");
-          }
-        }
-        return;
-      }
-
-      setPinError("");
-      setPinVerified(true);
-      setPinAttempts(0);
-      router.replace("/restaurantcardspage");
-    } catch (error) {
-      console.error("[RestaurantCardsPage] PIN verification failed:", error);
-      setPinError("Unable to verify PIN right now.");
-      setPinVerified(false);
-    } finally {
-      setPinChecking(false);
-    }
-  };
 
   const normalizedRestaurants = useMemo(
     () =>
@@ -892,6 +601,25 @@ export default function RestaurantCardsPage() {
     starsFilter,
   ]);
 
+  if (!authReady || !hasAccess) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#f8fafc",
+          color: "#475569",
+          fontSize: "14px",
+          padding: "24px",
+        }}
+      >
+        Checking access...
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: "32px", fontFamily: "Arial, sans-serif" }}>
       <header
@@ -960,7 +688,7 @@ export default function RestaurantCardsPage() {
 
           <button
             type="button"
-            onClick={user ? handleSignOut : handleSignIn}
+            onClick={handleSignOut}
             style={{
               marginTop: "8px",
               padding: "6px 14px",
@@ -972,85 +700,10 @@ export default function RestaurantCardsPage() {
               cursor: "pointer",
             }}
           >
-            {user ? "Sign out" : "Sign in with Google"}
+            Sign out
           </button>
         </div>
       </header>
-
-      {!user && (
-        <section
-          style={{
-            marginTop: "24px",
-            padding: "16px",
-            borderRadius: "12px",
-            background: "#f9fafb",
-            border: "1px solid #e5e7eb",
-          }}
-        >
-          <div style={{ fontWeight: 600, marginBottom: 6 }}>Sign in required</div>
-          <div style={{ color: "#4b5563", fontSize: "14px" }}>
-            Sign in with Google to access restaurant cards.
-          </div>
-        </section>
-      )}
-
-      {user && !pinVerified && !isBlocked && (
-        <section
-          style={{
-            marginTop: "24px",
-            padding: "16px",
-            borderRadius: "12px",
-            background: "#f9fafb",
-            border: "1px solid #e5e7eb",
-          }}
-        >
-          <div style={{ fontWeight: 600, marginBottom: 6 }}>
-            Enter your access PIN
-          </div>
-          <div style={{ color: "#4b5563", fontSize: "14px", marginBottom: 12 }}>
-            This PIN is required after Google sign-in to unlock the site.
-          </div>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <input
-              type="password"
-              value={pinInput}
-              onChange={(event) => {
-                setPinInput(event.target.value);
-                setPinError("");
-              }}
-              placeholder="Enter PIN"
-              style={{
-                padding: "10px 12px",
-                borderRadius: "8px",
-                border: "1px solid #d1d5db",
-                minWidth: "220px",
-              }}
-            />
-            <button
-              type="button"
-              onClick={handlePinVerify}
-              disabled={pinChecking}
-              style={{
-                padding: "10px 16px",
-                borderRadius: "8px",
-                border: "none",
-                background: pinChecking ? "#93c5fd" : "#2563eb",
-                color: "#fff",
-                fontWeight: 600,
-                cursor: pinChecking ? "not-allowed" : "pointer",
-              }}
-            >
-              {pinChecking ? "Verifying..." : "Verify PIN"}
-            </button>
-          </div>
-          {pinError && (
-            <div style={{ color: "#b45309", fontSize: "12px", marginTop: 8 }}>
-              {pinError}
-            </div>
-          )}
-        </section>
-      )}
-
       {hasAccess && (
         <>
       {/* Filters */}
@@ -1378,58 +1031,6 @@ export default function RestaurantCardsPage() {
         </div>
       </section>
 
-      {showAuthModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="auth-modal-title"
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(15, 23, 42, 0.45)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "24px",
-            zIndex: 50,
-          }}
-        >
-          <div
-            style={{
-              background: "#ffffff",
-              borderRadius: "16px",
-              maxWidth: "420px",
-              width: "100%",
-              padding: "24px",
-              boxShadow: "0 20px 45px rgba(15, 23, 42, 0.18)",
-              textAlign: "center",
-            }}
-          >
-            <h2
-              id="auth-modal-title"
-              style={{ fontSize: "20px", fontWeight: 700, marginBottom: "8px" }}
-            >
-              Sign in required
-            </h2>
-            <p style={{ color: "#475569", marginBottom: "20px" }}>{authModalMessage}</p>
-            <button
-              type="button"
-              onClick={() => setShowAuthModal(false)}
-              style={{
-                background: "#0f172a",
-                color: "#fff",
-                border: "none",
-                padding: "10px 18px",
-                borderRadius: "999px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
         </>
       )}
     </div>
